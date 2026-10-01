@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeutschAI — учим немецкий с кайфом</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1b1030;--paper:#fff3dc;--pink:#ff3d9a;--yellow:#ffd60a;--cyan:#22d3ee;--lime:#b8f03c;--violet:#8b5cf6;--orange:#ff7a1a}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Nunito',system-ui,sans-serif;font-weight:700;color:var(--ink);background:var(--paper);
+ background-image:radial-gradient(rgba(27,16,48,.14) 1.3px,transparent 1.5px);background-size:26px 26px;overflow-x:hidden;min-height:100vh}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:4px solid var(--ink);outline-offset:3px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.chip,.logo,.card,.sticker,.btn{border:3px solid var(--ink);box-shadow:5px 5px 0 var(--ink)}
+
+/* Шапка */
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px 0}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:50px;height:50px;border-radius:16px;background:var(--pink);color:#fff;display:grid;place-items:center;font-family:'Unbounded';font-weight:800;font-size:18px;transform:rotate(-6deg)}
+.brand b{font-family:'Unbounded';font-weight:800;font-size:19px;display:block;line-height:1}
+.brand small{font-size:12px;opacity:.7}
+.chips{display:flex;gap:10px}
+.chip{border-radius:999px;padding:8px 14px;font-size:14px;font-weight:800;white-space:nowrap;box-shadow:3px 3px 0 var(--ink)}
+.chip.y{background:var(--yellow)}.chip.l{background:var(--lime)}
+
+/* Герой */
+.hero{display:grid;grid-template-columns:1.4fr 1fr;gap:32px;align-items:center;padding:34px 0 46px}
+h1{font-family:'Unbounded';font-weight:800;font-size:clamp(32px,6vw,58px);line-height:1.05;letter-spacing:-.02em}
+h1 mark{background:var(--yellow);padding:0 .15em;border-radius:.2em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.lead{font-size:18px;margin:20px 0 26px;max-width:460px;opacity:.85}
+.btn{display:inline-flex;align-items:center;gap:10px;background:var(--pink);color:#fff;font-weight:800;font-size:17px;padding:14px 24px;border-radius:999px;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--ink)}
+.btn:active{transform:translate(4px,4px);box-shadow:1px 1px 0 var(--ink)}
+
+/* Слово дня */
+.sticker{background:var(--cyan);border-radius:28px;padding:22px;transform:rotate(3deg);text-align:center;position:relative;box-shadow:8px 8px 0 var(--ink)}
+.sticker .tag{position:absolute;top:-16px;left:18px;background:var(--yellow);border:3px solid var(--ink);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:800;transform:rotate(-5deg)}
+#art{font-size:15px;opacity:.7;margin-top:8px}
+#de{font-family:'Unbounded';font-weight:800;font-size:clamp(24px,4vw,34px);margin:4px 0;line-height:1.1}
+#ru{font-size:19px;margin-bottom:16px}
+.sticker button{background:#fff;border:3px solid var(--ink);border-radius:999px;font:800 15px 'Nunito';padding:9px 18px;cursor:pointer;box-shadow:3px 3px 0 var(--ink);transition:transform .12s,box-shadow .12s}
+.sticker button:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+
+/* Бегущая строка */
+.band{background:var(--violet);color:#fff;border-block:3px solid var(--ink);overflow:hidden;transform:rotate(-1.2deg);margin:0 -20px 50px}
+.track{display:flex;width:max-content;animation:run 32s linear infinite;padding:12px 0;font-family:'Unbounded';font-weight:600;font-size:17px}
+.track span{padding:0 22px;white-space:nowrap}
+@keyframes run{to{transform:translateX(-50%)}}
+
+/* Модули */
+h2{font-family:'Unbounded';font-weight:800;font-size:clamp(22px,3.4vw,30px);margin-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;padding-bottom:60px}
+.card{border-radius:28px;padding:22px;display:flex;flex-direction:column;gap:14px;min-height:220px;position:relative;transition:transform .15s,box-shadow .15s;background:var(--c)}
+.card:nth-child(odd){transform:rotate(-1deg)}.card:nth-child(even){transform:rotate(1deg)}
+.card:hover{transform:translate(-3px,-5px) rotate(0);box-shadow:9px 10px 0 var(--ink)}
+.card:active{transform:translate(4px,4px);box-shadow:1px 1px 0 var(--ink)}
+.top{display:flex;justify-content:space-between;align-items:center}
+.emoji{width:64px;height:64px;border-radius:50%;background:#fff;border:3px solid var(--ink);display:grid;place-items:center;font-size:32px}
+.mod{background:#fff;border:3px solid var(--ink);border-radius:999px;padding:3px 12px;font-size:13px;font-weight:800}
+.card h3{font-family:'Unbounded';font-weight:800;font-size:20px;line-height:1.15}
+.card p{font-size:15px;line-height:1.4;opacity:.85}
+.go{margin-top:auto;align-self:flex-end;width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:20px;transition:transform .2s}
+.card:hover .go{transform:rotate(-45deg) scale(1.1)}
+footer{text-align:center;padding:0 0 30px;font-size:13px;opacity:.6}
+
+@media(max-width:860px){.hero{grid-template-columns:1fr}.grid{grid-template-columns:repeat(2,1fr)}.sticker{transform:rotate(1.5deg)}}
+@media(max-width:560px){.grid{grid-template-columns:1fr}.chips .l{display:none}.card{min-height:0}}
+@media(prefers-reduced-motion:reduce){.track{animation:none}*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">DE</div>
+      <div><b>DeutschAI</b><small>учим немецкий</small></div>
+    </div>
+    <div class="chips">
+      <div class="chip y">🔥 5 дней</div>
+      <div class="chip l">💖 <span id="xp">420</span> XP</div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <h1>Немецкий, от которого <mark>хочется ещё!</mark></h1>
+      <p class="lead">Карточки, чат с ИИ, письма, блиц и рассказы. Выбирай режим и качай язык без скуки.</p>
+      <a class="btn" href="#modules">Поехали 🚀</a>
+    </div>
+    <div class="sticker" aria-live="polite">
+      <span class="tag">слово дня</span>
+      <div id="art">das</div>
+      <div id="de">Wort</div>
+      <div id="ru">слово</div>
+      <button id="more" type="button">Ещё слово 🎲</button>
+    </div>
+  </section>
+</div>
+
+<div class="band" aria-hidden="true"><div class="track" id="track"></div></div>
+
+<div class="wrap" id="modules">
+  <h2>Что учим сегодня?</h2>
+  <div class="grid">
+    <a class="card" style="--c:var(--pink)" href="modules/flashcards/index.html">
+      <div class="top"><div class="emoji">🎴</div><span class="mod">Модуль 1</span></div>
+      <div><h3>Карточки слов</h3><p>Запоминай слова с озвучкой</p></div>
+      <span class="go">→</span>
+    </a>
+    <a class="card" style="--c:var(--cyan)" href="modules/chat/index.html">
+      <div class="top"><div class="emoji">💬</div><span class="mod">Модуль 2</span></div>
+      <div><h3>Переписка с ИИ</h3><p>Живой чат на немецком на любые темы</p></div>
+      <span class="go">→</span>
+    </a>
+    <a class="card" style="--c:var(--violet);color:#fff" href="modules/letters/index.html">
+      <div class="top"><div class="emoji">💌</div><span class="mod" style="color:var(--ink)">Модуль 3</span></div>
+      <div><h3>Написание писем</h3><p>Пиши письма с подробным разбором ИИ</p></div>
+      <span class="go" style="background:#fff;color:var(--ink)">→</span>
+    </a>
+    <a class="card" style="--c:var(--yellow)" href="modules/audio/index.html">
+      <div class="top"><div class="emoji">🎧</div><span class="mod">Модуль 4</span></div>
+      <div><h3>Аудирование</h3><p>Слушай короткие фразы диктора и заполняй пропуски</p></div>
+      <span class="go">→</span>
+    </a>
+    <a class="card" style="--c:var(--lime)" href="modules/reading/index.html">
+      <div class="top"><div class="emoji">📖</div><span class="mod">Модуль 5</span></div>
+      <div><h3>Чтение и тесты</h3><p>Читай и отвечай на вопросы</p></div>
+      <span class="go">→</span>
+    </a>
+    <a class="card" style="--c:var(--orange)" href="modules/stories/index.html">
+      <div class="top"><div class="emoji">✨</div><span class="mod">Модуль 6</span></div>
+      <div><h3>Рассказы с переводом</h3><p>Нажимай на слова в тексте для моментального перевода</p></div>
+      <span class="go">→</span>
+    </a>
+    <a class="card" style="--c:var(--cyan)" href="modules/builder/index.html">
+      <div class="top"><div class="emoji">🧩</div><span class="mod">Модуль 7</span></div>
+      <div><h3>Конструктор предложений</h3><p>Составляй правильные предложения из разбросанных слов</p></div>
+      <span class="go">→</span>
+    </a>
+  </div>
+  <footer>DeutschAI &copy; 2026</footer>
+</div>
+
+<script>
+var words=[
+ {a:'die',de:'Freude',ru:'радость'},{a:'der',de:'Apfel',ru:'яблоко'},{a:'',de:'lernen',ru:'учиться'},
+ {a:'',de:'Guten Morgen',ru:'доброе утро'},{a:'die',de:'Katze',ru:'кошка'},{a:'',de:'Danke schön',ru:'большое спасибо'},
+ {a:'das',de:'Glück',ru:'счастье'},{a:'',de:'Wie geht’s?',ru:'как дела?'},{a:'der',de:'Freund',ru:'друг'},{a:'',de:'schön',ru:'красивый'}
+];
+var i=Math.floor(Math.random()*words.length);
+function show(){var w=words[i];
+ document.getElementById('art').textContent=w.a||'—';
+ document.getElementById('de').textContent=w.de;
+ document.getElementById('ru').textContent=w.ru;}
+document.getElementById('more').addEventListener('click',function(){i=(i+1+Math.floor(Math.random()*(words.length-1)))%words.length;show();});
+show();
+var t=words.map(function(w){return '<span>'+(w.a?w.a+' ':'')+w.de+' ✦</span>'}).join('');
+document.getElementById('track').innerHTML=t+t;
+</script>
+</body>
+</html>

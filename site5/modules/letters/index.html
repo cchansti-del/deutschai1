@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#fff3dc">
+<title>Schreiben Экзамен — DeutschAI</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1b1030; --paper: #fff3dc; --pink: #ff3d9a; --yellow: #ffd60a;
+  --cyan: #22d3ee; --lime: #b8f03c; --violet: #8b5cf6; --orange: #ff7a1a;
+  --display: 'Unbounded', 'Arial Black', system-ui, sans-serif;
+  --body: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --line: 3px solid var(--ink);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--body); font-weight: 700; color: var(--ink);
+  background: var(--paper) radial-gradient(rgba(27,16,48,.13) 1.3px, transparent 1.5px) 0 0 / 26px 26px;
+  min-height: 100vh; padding-bottom: 56px;
+}
+a { color: inherit; text-decoration: none; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 16px; }
+
+.btn {
+  font-family: var(--body); font-weight: 800; font-size: 15px; color: var(--ink);
+  background: #fff; border: var(--line); border-radius: 999px; padding: 10px 20px;
+  box-shadow: 4px 4px 0 var(--ink); cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+  transition: transform .12s, box-shadow .12s, background .12s;
+}
+.btn:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--ink); }
+.btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+.btn:disabled { opacity: .55; cursor: progress; transform: none; box-shadow: 4px 4px 0 var(--ink); }
+:focus-visible { outline: 3px solid var(--violet); outline-offset: 3px; }
+
+header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; gap: 12px; flex-wrap: wrap; }
+.brand { font-family: var(--display); font-weight: 800; font-size: 15px; }
+
+.card {
+  background: #fff; border: var(--line); box-shadow: 6px 6px 0 var(--ink);
+  border-radius: 24px; padding: clamp(18px, 4vw, 30px); margin-bottom: 24px;
+}
+h1 { font-family: var(--display); font-size: clamp(20px, 4.4vw, 26px); line-height: 1.25; margin-bottom: 8px; }
+.lead { font-weight: 600; opacity: .75; margin-bottom: 22px; max-width: 60ch; line-height: 1.5; }
+
+fieldset { border: 0; }
+.levels { display: flex; gap: 10px; flex-wrap: wrap; }
+.level { position: relative; }
+.level input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.level span {
+  display: block; min-width: 64px; text-align: center; padding: 10px 18px; border: var(--line);
+  border-radius: 14px; background: #fff; font-family: var(--display); font-size: 15px;
+  box-shadow: 3px 3px 0 var(--ink); transition: transform .12s, box-shadow .12s, background .12s;
+}
+.level:hover span { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
+.level input:checked + span { background: var(--c); transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.level input:focus-visible + span { outline: 3px solid var(--violet); outline-offset: 3px; }
+.level-info { margin: 14px 0 18px; font-weight: 700; line-height: 1.5; min-height: 3em; }
+.level-info small { display: block; font-weight: 600; opacity: .7; }
+
+.gen-btn { background: var(--yellow); font-family: var(--display); font-size: 14px; padding: 12px 22px; }
+.gen-btn:hover { background: var(--lime); }
+
+.task-box {
+  background: var(--paper); border: var(--line); border-radius: 18px;
+  padding: 20px 22px; margin: 22px 0; line-height: 1.65; font-size: 16px; font-weight: 600;
+}
+.task-box.empty { border-style: dashed; text-align: center; padding: 32px 20px; opacity: .8; }
+.task-box p + p, .task-box p + ul, .task-box ul + p { margin-top: 10px; }
+.task-box h3 { font-family: var(--display); font-size: 14px; margin: 16px 0 6px; }
+.task-box h3:first-child { margin-top: 0; }
+.task-box ul, .prose ul { padding-left: 22px; }
+.task-box li, .prose li { margin: 5px 0; padding-left: 4px; }
+.task-box li::marker { color: var(--pink); }
+.task-box b, .prose b { font-weight: 800; }
+
+.editor { display: flex; flex-direction: column; gap: 12px; }
+textarea {
+  width: 100%; height: 280px; border: var(--line); border-radius: 18px; padding: 18px;
+  font-family: var(--body); font-size: 17px; font-weight: 600; line-height: 1.6; color: var(--ink);
+  background: #fffdf8; resize: vertical; box-shadow: inset 3px 3px 0 rgba(27,16,48,.06);
+}
+textarea::placeholder { color: rgba(27,16,48,.45); }
+textarea:focus-visible { outline: 3px solid var(--violet); outline-offset: 2px; }
+.meter { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 14px; border: var(--line); border-radius: 999px; background: #fff; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--orange); transition: width .25s, background .25s; }
+.bar.ok i { background: var(--lime); }
+.count { font-weight: 800; font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.msg { font-size: 14px; font-weight: 700; color: #c2185b; min-height: 1.4em; flex: 1 1 200px; }
+.submit-btn { background: var(--pink); color: #fff; font-family: var(--display); font-size: 15px; padding: 14px 28px; }
+
+.feedback { display: none; }
+.feedback.show { display: block; animation: pop .35s cubic-bezier(.2,.9,.3,1.2); }
+@keyframes pop { from { transform: translateY(14px) scale(.98); opacity: 0; } }
+.feedback h2 { font-family: var(--display); font-size: 20px; color: var(--violet); margin-bottom: 18px; }
+.prose { line-height: 1.7; font-size: 16px; font-weight: 600; max-width: 68ch; }
+.prose p { margin-top: 8px; }
+.prose h3 {
+  font-family: var(--display); font-size: 15px; line-height: 1.4; margin: 28px 0 6px;
+  padding-bottom: 6px; border-bottom: 3px solid var(--yellow);
+}
+.prose h3:first-child { margin-top: 0; }
+.verdict { display: inline-block; padding: 2px 12px; border: var(--line); border-radius: 999px; font-weight: 800; }
+.verdict.pass { background: var(--lime); }
+.verdict.fail { background: var(--pink); color: #fff; }
+.loading { display: flex; align-items: center; gap: 12px; font-weight: 700; }
+.dots { display: inline-flex; gap: 5px; }
+.dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--pink); animation: bounce 1s infinite; }
+.dots i:nth-child(2) { background: var(--yellow); animation-delay: .15s; }
+.dots i:nth-child(3) { background: var(--cyan); animation-delay: .3s; }
+@keyframes bounce { 50% { transform: translateY(-7px); } }
+
+dialog { margin: auto; border: var(--line); border-radius: 22px; box-shadow: 6px 6px 0 var(--ink); padding: 24px; width: min(440px, calc(100% - 32px)); }
+dialog::backdrop { background: rgba(27,16,48,.55); }
+dialog h3 { font-family: var(--display); font-size: 17px; margin-bottom: 8px; }
+dialog p { font-weight: 600; line-height: 1.5; margin-bottom: 14px; font-size: 15px; }
+dialog input { width: 100%; border: var(--line); border-radius: 12px; padding: 12px 14px; font: 700 15px var(--body); margin-bottom: 16px; }
+dialog .row { display: flex; gap: 10px; justify-content: flex-end; }
+
+@media (max-width: 560px) {
+  .submit-btn, .gen-btn { width: 100%; justify-content: center; }
+  .actions { flex-direction: column-reverse; align-items: stretch; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <a href="../../index.html" onclick="if (history.length > 1) { history.back(); return false; }" class="btn" title="Назад на главную">← Назад</a>
+    <div class="brand">Schreiben Prüfungs-Trainer 📝</div>
+  </header>
+
+  <main>
+    <section class="card" aria-labelledby="title">
+      <h1 id="title">Тренажёр письменных экзаменов Goethe / telc</h1>
+      <p class="lead">Выбери уровень, получи билет, напиши ответ по всем пунктам — и получи разбор от ИИ-экзаменатора.</p>
+
+      <fieldset>
+        <legend style="position:absolute;left:-9999px">Уровень экзамена</legend>
+        <div class="levels">
+          <label class="level" style="--c:var(--lime)"><input type="radio" name="level" value="A0"><span>A0</span></label>
+          <label class="level" style="--c:var(--cyan)"><input type="radio" name="level" value="A1" checked><span>A1</span></label>
+          <label class="level" style="--c:var(--yellow)"><input type="radio" name="level" value="A2"><span>A2</span></label>
+          <label class="level" style="--c:var(--orange)"><input type="radio" name="level" value="B1"><span>B1</span></label>
+          <label class="level" style="--c:var(--pink)"><input type="radio" name="level" value="B2"><span>B2</span></label>
+        </div>
+      </fieldset>
+      <p class="level-info" id="levelInfo" aria-live="polite"></p>
+
+      <button class="btn gen-btn" id="genBtn" type="button">🎲 Получить билет</button>
+
+      <div class="task-box empty" id="taskDisplay" aria-live="polite">
+        Здесь появится задание. Нажми «Получить билет», чтобы начать.
+      </div>
+
+      <div class="editor">
+        <textarea id="userEssay" lang="de" spellcheck="false" aria-label="Твой ответ на немецком"
+          placeholder="Schreiben Sie hier Ihre Antwort auf Deutsch — nach allen Punkten der Aufgabe…"></textarea>
+        <div class="meter">
+          <div class="bar" id="bar" aria-hidden="true"><i></i></div>
+          <div class="count" id="count">0 / 30 слов</div>
+        </div>
+        <div class="actions">
+          <p class="msg" id="msg" role="alert"></p>
+          <button class="btn submit-btn" id="submitBtn" type="button">Сдать на рецензию 🚀</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card feedback" id="feedbackCard" aria-live="polite">
+      <h2>📋 Рецензия экзаменатора</h2>
+      <div class="prose" id="feedbackContent"></div>
+    </section>
+  </main>
+</div>
+
+
+
+<script>
+const DRAFT_STORE = 'deutschai_schreiben_draft';
+const LEVELS = {
+  A0: { words: 20,  info: 'Мини-сообщение или анкета', hint: 'около 20 слов' },
+  A1: { words: 30,  info: 'Короткая записка или SMS', hint: 'около 30 слов' },
+  A2: { words: 40,  info: 'Личное письмо или приглашение', hint: 'около 40 слов' },
+  B1: { words: 80,  info: 'Полуофициальное письмо: отказ, запрос', hint: 'около 80 слов' },
+  B2: { words: 150, info: 'Официальная жалоба (Beschwerde) или рецензия', hint: 'около 150 слов' }
+};
+const $ = id => document.getElementById(id);
+let currentTask = '';
+
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+};
+const level = () => document.querySelector('input[name=level]:checked').value;
+
+/* безопасный мини-markdown */
+function esc(s) {
+  return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function md(src) {
+  const inline = t => t.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  const lines = esc(src.replace(/<br\s*\/?>/gi, '\n')).split('\n');
+  let out = '', list = false;
+  for (const raw of lines) {
+    const l = raw.trim();
+    const li = l.match(/^[-*•]\s+(.*)/);
+    if (li) { if (!list) { out += '<ul>'; list = true; } out += '<li>' + inline(li[1]) + '</li>'; continue; }
+    if (list) { out += '</ul>'; list = false; }
+    if (!l) continue;
+    const h = l.match(/^#{1,4}\s+(.*)/);
+    if (h) out += '<h3>' + inline(h[1].replace(/\*\*/g, '')) + '</h3>';
+    else if (/^\d\.\s/.test(l) && l.includes('**')) out += '<h3>' + inline(l.replace(/^\d\.\s+/, '').replace(/\*\*/g, '').replace(/:$/, '')) + '</h3>';
+    else out += '<p>' + inline(l) + '</p>';
+  }
+  return out + (list ? '</ul>' : '');
+}
+function badge(html) {
+  return html.replace(/(NICHT BESTANDEN)|(BESTANDEN)/g,
+    (m, no) => `<span class="verdict ${no ? 'fail' : 'pass'}">${m}</span>`);
+}
+
+/* ИИ через серверную функцию Netlify (ключ спрятан на сервере) */
+async function ask(prompt) {
+  let res;
+  try {
+    res = await fetch('/.netlify/functions/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+  } catch (e) { throw new Error('Нет связи с сервером. Проверь интернет и повтори.'); }
+  if (res.status === 429) throw new Error('Много запросов сразу. Подожди минуту и повтори.');
+  if (res.status === 404) throw new Error('Серверная функция не найдена. Сайт нужно задеплоить вместе с папкой netlify/functions.');
+  if (res.status === 500) throw new Error('На сервере не настроен ключ (GROQ_API_KEY).');
+  if (!res.ok) throw new Error('Сервер ответил ошибкой ' + res.status + '. Попробуй ещё раз.');
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content?.trim();
+  if (!text) throw new Error('Пустой ответ от модели. Попробуй ещё раз.');
+  return text;
+}
+const loading = t => `<div class="loading"><span class="dots"><i></i><i></i><i></i></span>${t}</div>`;
+
+/* билет */
+async function generateNewTask() {
+  const lv = level(), box = $('taskDisplay'), btn = $('genBtn');
+  btn.disabled = true;
+  box.className = 'task-box';
+  box.innerHTML = loading('Комиссия составляет билет…');
+  $('msg').textContent = '';
+  const prompt = `Ты — составитель официальных билетов экзаменов Goethe-Institut и telc.
+Сформируй 1 строгое официальное задание (Schreiben) уровня ${lv}.
+
+СТРУКТУРА:
+### Situation
+Жизненный контекст на немецком, затем краткий перевод на русском.
+### Aufgabe
+Кому и зачем пишем (другу, менеджеру отеля, арендодателю и т. д.). Краткий перевод на русском.
+### Inhaltspunkte
+Ровно 3 или 4 пункта списком (каждый начинается с "- "), которые кандидат ОБЯЗАН раскрыть. Краткий перевод на русском.
+### Umfang
+Требуемый объём: ${LEVELS[lv].hint}.
+
+Выдай только билет в Markdown, без вступлений и комментариев.`;
+  try {
+    currentTask = await ask(prompt);
+    box.innerHTML = md(currentTask);
+  } catch (e) {
+    currentTask = '';
+    box.className = 'task-box empty';
+    box.textContent = '❌ ' + e.message;
+  } finally { btn.disabled = false; }
+}
+
+/* рецензия */
+async function checkEssay() {
+  const text = $('userEssay').value.trim(), lv = level();
+  const msg = $('msg'), card = $('feedbackCard'), out = $('feedbackContent'), btn = $('submitBtn');
+  msg.textContent = '';
+  if (!currentTask) { msg.textContent = 'Сначала получи билет — без задания проверять нечего.'; return; }
+  if (!text) { msg.textContent = 'Напиши текст перед сдачей билета.'; $('userEssay').focus(); return; }
+
+  btn.disabled = true;
+  card.classList.add('show');
+  out.innerHTML = loading('Экзаменатор проверяет работу…');
+  card.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+
+  const prompt = `Ты — строгий лицензированный экзаменатор Goethe-Zertifikat / telc.
+Оцени работу кандидата по официальным критериям для уровня ${lv}.
+
+ЭКЗАМЕНАЦИОННЫЙ БИЛЕТ:
+${currentTask}
+
+ОТВЕТ КАНДИДАТА:
+${text}
+
+СФОРМИРУЙ РЕЦЕНЗИЮ СТРОГО В ТАКОМ ФОРМАТЕ (на русском языке, Markdown):
+
+### Выполнение пунктов
+Перечисли каждый пункт задания списком и поставь ✅ (раскрыт) или ❌ (не раскрыт).
+
+### Итоговая оценка
+Баллы (например 12/15) и вердикт: **BESTANDEN** или **NICHT BESTANDEN**.
+
+### Разбор ошибок
+Списком: фрагмент кандидата → правильный вариант и объяснение правила (артикли, спряжение, порядок слов V2 / Nebensatz).
+
+### Стиль и Redemittel
+Проверь Anrede и Grußformel. Предложи 2–3 более сильные устойчивые фразы для этого уровня.
+
+### Образцовый вариант
+Идеальный текст ответа на этот билет для уровня ${lv} на немецком.`;
+  try {
+    out.innerHTML = badge(md(await ask(prompt)));
+  } catch (e) {
+    out.textContent = '❌ ' + e.message;
+  } finally { btn.disabled = false; }
+}
+
+/* уровень и счётчик слов */
+function updateLevel() {
+  const lv = level(), L = LEVELS[lv];
+  $('levelInfo').innerHTML = `<b>Goethe / telc ${lv}</b> — ${L.info}<small>Нужно ${L.hint}</small>`;
+  updateCount();
+}
+function updateCount() {
+  const t = $('userEssay').value.trim();
+  const n = t ? t.split(/\s+/).length : 0, goal = LEVELS[level()].words;
+  $('count').textContent = `${n} / ${goal} слов`;
+  $('bar').classList.toggle('ok', n >= goal);
+  $('bar').firstElementChild.style.width = Math.min(100, n / goal * 100) + '%';
+}
+
+document.querySelectorAll('input[name=level]').forEach(r => r.addEventListener('change', updateLevel));
+$('genBtn').addEventListener('click', generateNewTask);
+$('submitBtn').addEventListener('click', checkEssay);
+$('userEssay').addEventListener('input', () => { updateCount(); store.set(DRAFT_STORE, $('userEssay').value); });
+$('userEssay').value = store.get(DRAFT_STORE) || '';
+updateLevel();
+</script>
+</body>
+</html>

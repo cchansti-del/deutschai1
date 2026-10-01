@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Карточки слов — DeutschAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1b1030;--paper:#fff3dc;--pink:#ff3d9a;--yellow:#ffd60a;--cyan:#22d3ee;--lime:#b8f03c;--violet:#8b5cf6;--orange:#ff7a1a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',system-ui,sans-serif;font-weight:700;color:var(--ink);background:var(--paper);
+ background-image:radial-gradient(rgba(27,16,48,.14) 1.3px,transparent 1.5px);background-size:26px 26px;min-height:100vh;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:4px solid var(--ink);outline-offset:3px}
+.wrap{max-width:720px;margin:0 auto;padding:0 18px}
+.pill,.btn,select,.opt{border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);background:#fff;color:var(--ink);font:800 14px 'Nunito',sans-serif;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.pill:hover,.btn:hover,select:hover,.opt:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink)}
+.pill:active,.btn:active,.opt:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;padding:16px 0}
+.left{display:flex;align-items:center;gap:12px}
+.pill{border-radius:999px;padding:9px 16px;display:inline-flex;align-items:center;gap:6px}
+.logo{width:44px;height:44px;border-radius:14px;background:var(--pink);color:#fff;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);display:grid;place-items:center;font:800 16px 'Unbounded';transform:rotate(-6deg)}
+h1{font:800 18px/1 'Unbounded'}
+.ctrl{display:flex;align-items:center;gap:10px}
+select{border-radius:999px;padding:9px 14px;appearance:none;-webkit-appearance:none;max-width:190px}
+#btn-auto-audio.on{background:var(--lime)}
+
+.stats{display:flex;justify-content:space-between;align-items:center;margin:8px 0 10px;font-size:15px}
+.score{display:flex;gap:10px}
+.score span{border:3px solid var(--ink);border-radius:999px;padding:3px 12px;font-weight:800;box-shadow:2px 2px 0 var(--ink)}
+.s-ok{background:var(--lime)}.s-bad{background:var(--pink);color:#fff}
+.bar{height:20px;border:3px solid var(--ink);border-radius:999px;background:#fff;overflow:hidden;margin-bottom:26px}
+#progress-bar{height:100%;width:0;background:var(--pink);border-right:3px solid var(--ink);transition:width .3s}
+
+.stage{perspective:1000px;height:380px;cursor:pointer;user-select:none;margin-bottom:24px}
+#flashcard{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.3,1.3,.5,1)}
+#flashcard.rotate-y-180{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:3px solid var(--ink);border-radius:30px;box-shadow:8px 8px 0 var(--ink);padding:20px 22px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.front{background:var(--yellow)}
+.back{background:var(--violet);color:#fff;transform:rotateY(180deg)}
+.row{display:flex;justify-content:space-between;align-items:center}
+#card-art{border:3px solid var(--ink);border-radius:999px;background:#fff;color:var(--ink);padding:3px 14px;font-size:14px;font-weight:800}
+#card-art[data-art=der]{background:var(--cyan)}#card-art[data-art=die]{background:var(--pink);color:#fff}
+#card-art[data-art=das]{background:var(--lime)}#card-art[data-art=verb]{background:var(--orange)}
+.speak{width:46px;height:46px;border-radius:50%;border:3px solid var(--ink);background:#fff;font-size:20px;cursor:pointer;box-shadow:3px 3px 0 var(--ink);transition:transform .12s,box-shadow .12s}
+.speak:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+.mid{text-align:center}
+#card-word-de{font:800 clamp(30px,7vw,44px)/1.1 'Unbounded';overflow-wrap:anywhere}
+#card-pl{margin-top:8px;font-size:16px;opacity:.75}
+#card-word-ru{font:800 clamp(26px,6vw,38px)/1.15 'Unbounded';color:var(--yellow);overflow-wrap:anywhere}
+.ex{background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:18px;padding:10px 14px;text-align:left}
+.ex small{display:block;font-size:12px;opacity:.6;margin-bottom:2px}
+.ex p{font-size:15px;line-height:1.35}
+.hint{text-align:center;font-size:13px;opacity:.7}
+#card-category-tag{background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:999px;padding:3px 12px;font-size:13px}
+
+.quiz{background:#fff;border:3px solid var(--ink);border-radius:26px;box-shadow:6px 6px 0 var(--ink);padding:16px;margin-bottom:22px}
+.qhead{display:flex;justify-content:space-between;gap:8px;font-size:14px;margin-bottom:12px}
+.status{opacity:.6}.status.ok{color:#2d8a00;opacity:1;font-weight:800}.status.bad{color:#d10068;opacity:1;font-weight:800}
+#options-container{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{border-radius:16px;padding:12px 14px;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%}
+.opt .mark{font-size:16px;opacity:.35}
+.opt:disabled{cursor:default}.opt:disabled:hover{transform:none;box-shadow:3px 3px 0 var(--ink)}
+.opt.right{background:var(--lime)}.opt.right .mark{opacity:1}
+.opt.wrong{background:var(--pink);color:#fff}.opt.wrong .mark{opacity:1}
+
+.nav{display:flex;gap:14px;padding-bottom:40px}
+.btn{flex:1;border-radius:999px;padding:14px 18px;font-size:16px;display:flex;justify-content:center;align-items:center;gap:8px}
+#btn-next{background:var(--pink);color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:3px 3px 0 var(--ink)}
+
+.tabs{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin:2px 0 14px}
+.modes,.levels{display:flex;gap:10px;flex-wrap:wrap}
+.tab,.lvl{border:3px solid var(--ink);border-radius:999px;background:#fff;color:var(--ink);font:800 14px 'Nunito',sans-serif;padding:8px 16px;cursor:pointer;box-shadow:3px 3px 0 var(--ink);transition:transform .12s,box-shadow .12s}
+.tab:hover,.lvl:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink)}
+.tab:active,.lvl:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+.tab.on{background:var(--pink);color:#fff}
+.tab b{background:var(--ink);color:#fff;border-radius:999px;padding:1px 8px;margin-left:4px;font-size:12px}
+.lvl.on{background:var(--yellow)}
+.lvl small{opacity:.55;margin-left:5px;font-size:12px}
+.lvl.empty:not(.on){background:#f4ecd9}
+.s-skip{background:var(--yellow)}
+.pill.small{padding:7px 14px;font-size:13px}
+.opt.peek{background:var(--yellow)}.opt.peek .mark{opacity:1}
+select:disabled{opacity:.45;cursor:not-allowed}
+[hidden]{display:none!important}
+@media(max-width:520px){.stage{height:410px}#options-container{grid-template-columns:1fr}.btn span.t{font-size:15px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="left">
+      <a href="../../index.html" onclick="if (history.length > 1) { history.back(); return false; }" class="pill" title="Назад на главную">← Назад</a>
+      <div class="logo">DE</div>
+      <h1>Карточки</h1>
+    </div>
+    <div class="ctrl">
+      <select id="letter-filter" aria-label="Буква"><option value="ALL">Все буквы</option></select>
+      <button id="btn-shuffle" class="pill" type="button" title="Перемешать">🎲 Микс</button>
+      <button id="btn-auto-audio" class="pill" type="button" title="Автопроизношение"><span id="audio-icon">🔊</span></button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="modes">
+      <button id="tab-learn" class="tab on" type="button">🎴 Учить</button>
+      <button id="tab-review" class="tab" type="button">🔁 Повторение <b id="review-count">0</b></button>
+    </div>
+    <div class="levels" id="levels" role="group" aria-label="Уровень"></div>
+    <button id="btn-clear-review" class="pill small" type="button" hidden>🗑 Очистить список</button>
+  </div>
+
+  <div class="stats">
+    <span id="card-counter">Карточка 0 из 0</span>
+    <div class="score"><span class="s-ok">✓ <b id="score-correct">0</b></span><span class="s-bad">✕ <b id="score-wrong">0</b></span><span class="s-skip" title="Пропущено или подсмотрено">👀 <b id="score-skip">0</b></span></div>
+  </div>
+  <div class="bar"><div id="progress-bar"></div></div>
+
+  <div class="stage" id="flashcard-container">
+    <div id="flashcard">
+      <div class="face front">
+        <div class="row">
+          <span id="card-art">---</span>
+          <button class="speak" type="button" title="Прослушать" onclick="event.stopPropagation(); speakGerman();">🔊</button>
+        </div>
+        <div class="mid">
+          <h2 id="card-word-de">Загрузка...</h2>
+          <p id="card-pl">---</p>
+        </div>
+        <div class="ex"><small>Пример</small><p id="card-ex-de">---</p></div>
+        <div class="hint">Нажми на карточку, чтобы перевернуть 👆</div>
+      </div>
+      <div class="face back">
+        <div class="row">
+          <span style="font-size:14px;font-weight:800">Перевод</span>
+          <span id="card-category-tag">Буква</span>
+        </div>
+        <div class="mid"><h2 id="card-word-ru">---</h2></div>
+        <div class="ex"><small>Пример</small><p id="card-ex-ru">---</p></div>
+        <div class="hint">Нажми, чтобы вернуть немецкую сторону</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz">
+    <div class="qhead"><b>Выбери правильный перевод</b><span id="quiz-status" class="status">Выберите 1 из 4</span></div>
+    <div id="options-container"></div>
+  </div>
+
+  <div class="nav">
+    <button id="btn-prev" class="btn" type="button">← <span class="t">Назад</span></button>
+    <button id="btn-next" class="btn" type="button"><span class="t">Далее</span> →</button>
+  </div>
+</div>
+
+<script>
+const rawFlashcardsData = {
+            A: [
+                { art: "verb", de: "abfahren", pl: "fährst ab, fuhr ab", ru: "Отъезжать, уезжать", exDe: "Der Zug fährt um 8 Uhr ab.", exRu: "Поезд отъезжает в 8 часов." },
+      { art: "die", de: "Abfahrt", pl: "die Abfahrten", ru: "Отправление, отъезд", exDe: "Vor der Abfahrt kaufe ich eine Karte.", exRu: "Перед отъездом я куплю билет." },
+      { art: "der", de: "Abflug", pl: "die Abflüge", ru: "Вылет", exDe: "Der Abflug ist um 10 Uhr.", exRu: "Вылет в 10 часов." },
+      { art: "verb", de: "abgeben", pl: "gibt ab, gab ab", ru: "Сдавать, отдавать", exDe: "Ich muss meinen Schlüssel abgeben.", exRu: "Я должен сдать свой ключ." },
+      { art: "verb", de: "abholen", pl: "holt ab, holte ab", ru: "Забирать, встречать", exDe: "Ich hole dich vom Bahnhof ab.", exRu: "Я заберу тебя с вокзала." },
+      { art: "der", de: "Absender", pl: "die Absender", ru: "Отправитель", exDe: "Der Absender steht auf dem Brief.", exRu: "Отправитель указан на письме." },
+      { art: "-", de: "Achtung", pl: "-", ru: "Внимание!", exDe: "Achtung! Der Zug kommt.", exRu: "Внимание! Поезд прибывает." },
+      { art: "die", de: "Adresse", pl: "die Adressen", ru: "Адрес", exDe: "Wie ist Ihre Adresse?", exRu: "Какой у Вас адрес?" },
+      { art: "-", de: "allein", pl: "-", ru: "Один, в одиночестве", exDe: "Er wohnt allein.", exRu: "Он живет один." },
+      { art: "-", de: "alt", pl: "-", ru: "Старый", exDe: "Ich bin 30 Jahre alt.", exRu: "Мне 30 лет." },
+      { art: "das", de: "Alter", pl: "без мн. ч.", ru: "Возраст", exDe: "Alter: 26 Jahre.", exRu: "Возраст: 26 лет." },
+      { art: "verb", de: "anbieten", pl: "bietet an, bot an", ru: "Предлагать", exDe: "Kann ich Ihnen einen Kaffee anbieten?", exRu: "Могу я предложить вам кофе?" },
+      { art: "-", de: "ander-", pl: "-", ru: "Другой", exDe: "Die anderen Personen sind hier.", exRu: "Другие люди здесь." },
+      { art: "verb", de: "anfangen", pl: "fängt an, fing an", ru: "Начинать", exDe: "Der Unterricht fängt um 9 Uhr an.", exRu: "Урок начинается в 9 часов." },
+      { art: "der", de: "Anfang", pl: "die Anfänge", ru: "Начало", exDe: "Sie wohnt seit Anfang Juli in Berlin.", exRu: "Она живет в Берлине с начала июля." },
+      { art: "die", de: "Ankunft", pl: "die Ankünfte", ru: "Прибытие", exDe: "Die Ankunft ist um 14 Uhr.", exRu: "Прибытие в 14:00." },
+      { art: "verb", de: "anmachen", pl: "macht an, machte an", ru: "Включать (свет/прибор)", exDe: "Mach bitte das Licht an!", exRu: "Включи, пожалуйста, свет!" },
+      { art: "verb", de: "anmelden", pl: "meldet an, meldete an", ru: "Регистрировать, регистрироваться", exDe: "Wo kann ich mich anmelden?", exRu: "Где я могу зарегистрироваться?" },
+      { art: "die", de: "Anmeldung", pl: "die Anmeldungen", ru: "Регистрация", exDe: "Die Anmeldung ist im Erdgeschoss.", exRu: "Регистрация на первом этаже." },
+      { art: "verb", de: "anrufen", pl: "ruft an, rief an", ru: "Звонить по телефону", exDe: "Ich rufe dich morgen an.", exRu: "Я позвоню тебе завтра." },
+      { art: "der", de: "Anrufbeantworter", pl: "die Anrufbeantworter", ru: "Автоответчик", exDe: "Sprechen Sie auf den Anrufbeantworter.", exRu: "Говорите на автоответчик." },
+      { art: "die", de: "Antwort", pl: "die Antworten", ru: "Ответ", exDe: "Geben Sie mir bitte eine Antwort.", exRu: "Дайте мне, пожалуйста, ответ." },
+      { art: "verb", de: "antworten", pl: "antwortet, antwortete", ru: "Отвечать", exDe: "Er antwortet nicht auf die Frage.", exRu: "Он не отвечает на вопрос." },
+      { art: "die", de: "Anzeige", pl: "die Anzeigen", ru: "Объявление", exDe: "Ich habe Ihre Anzeige gelesen.", exRu: "Я прочитал ваше объявление." },
+      { art: "verb", de: "anziehen", pl: "zieht an, zog an", ru: "Надевать, одеваться", exDe: "Ich ziehe einen Mantel an.", exRu: "Я надеваю пальто." },
+      { art: "der", de: "Apfel", pl: "die Äpfel", ru: "Яблоко", exDe: "Der Apfel ist rot.", exRu: "Яблоко красное." },
+      { art: "das", de: "Appartement", pl: "die Appartements", ru: "Апартаменты, квартира", exDe: "Das Appartement ist klein.", exRu: "Квартира маленькая." },
+      { art: "die", de: "Arbeit", pl: "die Arbeiten", ru: "Работа", exDe: "Ich suche eine Arbeit.", exRu: "Я ищу работу." },
+      { art: "verb", de: "arbeiten", pl: "arbeitet, arbeitete", ru: "Работать", exDe: "Er arbeitet bei Siemens.", exRu: "Он работает в Siemens." },
+      { art: "der", de: "Arbeitsplatz", pl: "die Arbeitsplätze", ru: "Рабочее место", exDe: "Mein Arbeitsplatz ist modern.", exRu: "Мое рабочее место современное." },
+      { art: "der", de: "Arzt", pl: "die Ärzte", ru: "Врач", exDe: "Ich muss zum Arzt gehen.", exRu: "Мне нужно пойти к врачу." },
+      { art: "-", de: "auch", pl: "-", ru: "Тоже, также", exDe: "Ich komme auch aus Deutschland.", exRu: "Я тоже из Германии." },
+      { art: "-", de: "auf", pl: "-", ru: "На (поверхности)", exDe: "Das Buch liegt auf dem Tisch.", exRu: "Книга лежит на столе." },
+      { art: "die", de: "Aufgabe", pl: "die Aufgaben", ru: "Задача, задание", exDe: "Das ist eine schwere Aufgabe.", exRu: "Это трудная задача." },
+      { art: "verb", de: "aufhören", pl: "hört auf, hörte auf", ru: "Прекращать, заканчивать", exDe: "Der Kurs hört um 17 Uhr auf.", exRu: "Курс заканчивается в 17:00." },
+      { art: "verb", de: "aufstehen", pl: "steht auf, stand auf", ru: "Вставать, подниматься", exDe: "Ich stehe um 6 Uhr auf.", exRu: "Я встаю в 6 часов." },
+      { art: "das", de: "Auge", pl: "die Augen", ru: "Глаз", exDe: "Er hat blaue Augen.", exRu: "У него голубые глаза." },
+      { art: "-", de: "aus", pl: "-", ru: "Из", exDe: "Ich komme aus der Schweiz.", exRu: "Я из Швейцарии." },
+      { art: "verb", de: "ausfüllen", pl: "füllt aus, füllte aus", ru: "Заполнять (бланк)", exDe: "Füllen Sie bitte das Formular aus.", exRu: "Заполните, пожалуйста, форму." },
+      { art: "die", de: "Auskunft", pl: "die Auskünfte", ru: "Справка, информация", exDe: "Können Sie mir eine Auskunft geben?", exRu: "Можете дать мне справку?" },
+      { art: "das", de: "Ausland", pl: "без мн. ч.", ru: "Заграница", exDe: "Ich fahre ins Ausland.", exRu: "Я еду за границу." },
+      { art: "verb", de: "ausmachen", pl: "macht aus, machte aus", ru: "Выключать / Договариваться", exDe: "Mach bitte das Licht aus!", exRu: "Выключи, пожалуйста, свет!" },
+      { art: "verb", de: "aussehen", pl: "sieht aus, sah aus", ru: "Выглядеть", exDe: "Du siehst gut aus.", exRu: "Ты отлично выглядишь." },
+      { art: "verb", de: "aussteigen", pl: "steigt aus, stieg aus", ru: "Выходить (из транспорта)", exDe: "An der nächsten Haltestelle steige ich aus.", exRu: "На следующей остановке я выхожу." },
+      { art: "der", de: "Ausweis", pl: "die Ausweise", ru: "Удостоверение / Паспорт", exDe: "Zeigen Sie bitte Ihren Ausweis.", exRu: "Покажите, пожалуйста, ваше удостоверение." },
+      { art: "verb", de: "ausziehen", pl: "zieht aus, zog aus", ru: "Снимать (одежду) / Съезжать", exDe: "Zieh bitte die Schuhe aus!", exRu: "Сними, пожалуйста, обувь!" },
+      { art: "das", de: "Auto", pl: "die Autos", ru: "Автомобиль", exDe: "Das Auto ist neu.", exRu: "Машина новая." },
+      { art: "die", de: "Autobahn", pl: "die Autobahnen", ru: "Автобан, шоссе", exDe: "Wir fahren auf der Autobahn.", exRu: "Мы едем по автобану." },
+      { art: "-", de: "automatisch", pl: "-", ru: "Автоматический", exDe: "Die Tür öffnet automatisch.", exRu: "Дверь открывается автоматически." }
+            ],
+            B: [
+                { art: "das", de: "Baby", pl: "die Babys", ru: "Младенец", exDe: "Das Baby schläft.", exRu: "Младенец спит." },
+      { art: "die", de: "Bäckerei", pl: "die Bäckereien", ru: "Пекарня", exDe: "Ich kaufe Brot in der Bäckerei.", exRu: "Я покупаю хлеб в пекарне." },
+      { art: "das", de: "Bad", pl: "die Bäder", ru: "Ванная комната", exDe: "Das Bad ist neu renoviert.", exRu: "Ванная комната недавно отремонтирована." },
+      { art: "verb", de: "baden", pl: "badet, badete", ru: "Купаться, принимать ванну", exDe: "Ich bade gerne im See.", exRu: "Я люблю купаться в озере." },
+      { art: "die", de: "Bahn", pl: "die Bahnen", ru: "Поезд, железная дорога", exDe: "Wir fahren mit der Bahn.", exRu: "Мы едем на поезде." },
+      { art: "der", de: "Bahnhof", pl: "die Bahnhöfe", ru: "Вокзал", exDe: "Ich warte am Bahnhof.", exRu: "Я жду на вокзале." },
+      { art: "der", de: "Bahnsteig", pl: "die Bahnsteige", ru: "Платформа, перрон", exDe: "Der Zug fährt von Bahnsteig 3 ab.", exRu: "Поезд отправляется с платформы 3." },
+      { art: "-", de: "bald", pl: "-", ru: "Скоро", exDe: "Ich komme bald nach Hause.", exRu: "Я скоро приду домой." },
+      { art: "der", de: "Balkon", pl: "die Balkone", ru: "Балкон", exDe: "Die Wohnung hat einen kleinen Balkon.", exRu: "В квартире есть маленький балкон." },
+      { art: "die", de: "Banane", pl: "die Bananen", ru: "Банан", exDe: "Die Banane ist gelb.", exRu: "Банан желтый." },
+      { art: "die", de: "Bank", pl: "die Banken", ru: "Банк", exDe: "Die Bank schließt um 18 Uhr.", exRu: "Банк закрывается в 18:00." },
+      { art: "-", de: "bar", pl: "-", ru: "Наличными", exDe: "Möchten Sie bar bezahlen?", exRu: "Вы хотите оплатить наличными?" },
+      { art: "der", de: "Bauch", pl: "die Bäuche", ru: "Живот", exDe: "Mein Bauch tut weh.", exRu: "У меня болит живот." },
+      { art: "der", de: "Baum", pl: "die Bäume", ru: "Дерево", exDe: "Der Baum steht im Garten.", exRu: "Дерево стоит в саду." },
+      { art: "verb", de: "bedeuten", pl: "bedeutet, bedeutete", ru: "Означать", exDe: "Was bedeutet dieses Wort?", exRu: "Что означает это слово?" },
+      { art: "verb", de: "beginnen", pl: "beginnt, begann", ru: "Начинать(ся)", exDe: "Der Film beginnt um 20 Uhr.", exRu: "Фильм начинается в 20:00." },
+      { art: "-", de: "bei", pl: "-", ru: "У, при, возле", exDe: "Er wohnt bei seinen Eltern.", exRu: "Он живет у своих родителей." },
+      { art: "-", de: "beide", pl: "-", ru: "Оба, обе", exDe: "Beide Kinder gehen in die Schule.", exRu: "Оба ребенка ходят в школу." },
+      { art: "das", de: "Bein", pl: "die Beine", ru: "Нога", exDe: "Mein Bein tut weh.", exRu: "У меня болит нога." },
+      { art: "der", de: "Bekannte", pl: "die Bekannten", ru: "Знакомый / Знакомая", exDe: "Ein Bekannter hat mir geholfen.", exRu: "Один знакомый мне помог." },
+      { art: "verb", de: "bekommen", pl: "bekommt, bekam", ru: "Получать", exDe: "Haben Sie meinen Brief bekommen?", exRu: "Вы получили мое письмо?" },
+      { art: "verb", de: "benutzen", pl: "benutzt, benutzte", ru: "Использовать, пользоваться", exDe: "Darf ich das Telefon benutzen?", exRu: "Могу я воспользоваться телефоном?" },
+      { art: "der", de: "Beruf", pl: "die Berufe", ru: "Профессия", exDe: "Was sind Sie von Beruf?", exRu: "Кто вы по профессии?" },
+      { art: "-", de: "besetzt", pl: "-", ru: "Занят (о месте, линии)", exDe: "Die Nummer ist besetzt.", exRu: "Номер занят." },
+      { art: "verb", de: "besichtigen", pl: "besichtigt, besichtigte", ru: "Осматривать (достопримечательности)", exDe: "Wir besichtigen die Stadt.", exRu: "Мы осматриваем город." },
+      { art: "-", de: "besser", pl: "-", ru: "Лучше", exDe: "Heute geht es mir besser.", exRu: "Сегодня мне лучше." },
+      { art: "-", de: "best-", pl: "-", ru: "Лучший", exDe: "Das ist der beste Preis.", exRu: "Это лучшая цена." },
+      { art: "verb", de: "bestellen", pl: "bestellt, bestellte", ru: "Заказывать", exDe: "Wir bestellen eine Pizza.", exRu: "Мы заказываем пиццу." },
+      { art: "verb", de: "besuchen", pl: "besucht, besuchte", ru: "Посещать, навещать", exDe: "Ich besuche meine Oma.", exRu: "Я навещаю свою бабушку." },
+      { art: "das", de: "Bett", pl: "die Betten", ru: "Кровать", exDe: "Das Bett ist sehr bequem.", exRu: "Кровать очень удобная." },
+      { art: "verb", de: "bezahlen", pl: "bezahlt, bezahlte", ru: "Оплачивать", exDe: "Ich möchte bitte bezahlen.", exRu: "Я бы хотел оплатить." },
+      { art: "das", de: "Bier", pl: "die Biere", ru: "Пиво", exDe: "Ein Bier, bitte.", exRu: "Одно пиво, пожалуйста." },
+      { art: "das", de: "Bild", pl: "die Bilder", ru: "Картина, фото", exDe: "Das Bild hängt an der Wand.", exRu: "Картина висит на стене." },
+      { art: "-", de: "billig", pl: "-", ru: "Дешевый", exDe: "Das Buch ist sehr billig.", exRu: "Эта книга очень дешевая." },
+      { art: "die", de: "Birne", pl: "die Birnen", ru: "Груша", exDe: "Ich esse eine Birne.", exRu: "Я ем грушу." },
+      { art: "-", de: "bis", pl: "-", ru: "До", exDe: "Bis morgen!", exRu: "До завтра!" },
+      { art: "-", de: "bisschen", pl: "-", ru: "Немного", exDe: "Ich spreche ein bisschen Deutsch.", exRu: "Я немного говорю по-немецки." },
+      { art: "verb", de: "bitten", pl: "bittet, bat", ru: "Просить", exDe: "Darf ich Sie um etwas bitten?", exRu: "Могу я вас о чем-то попросить?" },
+      { art: "die", de: "Bitte", pl: "die Bitten", ru: "Просьба / Пожалуйста", exDe: "Ich habe eine Bitte.", exRu: "У меня есть просьба." },
+      { art: "-", de: "bitter", pl: "-", ru: "Горький", exDe: "Der Kaffee ist bitter.", exRu: "Кофе горький." },
+      { art: "verb", de: "bleiben", pl: "bleibt, blieb", ru: "Оставаться", exDe: "Ich bleibe heute zu Hause.", exRu: "Я сегодня остаюсь дома." },
+      { art: "der", de: "Bleistift", pl: "die Bleistifte", ru: "Карандаш", exDe: "Hast du einen Bleistift?", exRu: "У тебя есть карандаш?" },
+      { art: "der", de: "Blick", pl: "die Blicke", ru: "Вид", exDe: "Das Zimmer hat einen Blick auf den See.", exRu: "Из номера открывается вид на озеро." },
+      { art: "die", de: "Blume", pl: "die Blumen", ru: "Цветок", exDe: "Er schenkt ihr Blumen.", exRu: "Он дарит ей цветы." },
+      { art: "-", de: "böse", pl: "-", ru: "Злой", exDe: "Bist du böse auf mich?", exRu: "Ты на меня злишься?" },
+      { art: "verb", de: "brauchen", pl: "braucht, brauchte", ru: "Нуждаться, требоваться", exDe: "Ich brauche deine Hilfe.", exRu: "Мне нужна твоя помощь." },
+      { art: "-", de: "breit", pl: "-", ru: "Широкий", exDe: "Die Straße ist sehr breit.", exRu: "Улица очень широкая." },
+      { art: "der", de: "Brief", pl: "die Briefe", ru: "Письмо", exDe: "Ich schreibe einen Brief.", exRu: "Я пишу письмо." },
+      { art: "die", de: "Briefmarke", pl: "die Briefmarken", ru: "Почтовая марка", exDe: "Kaufen Sie eine Briefmarke.", exRu: "Купите почтовую марку." },
+      { art: "verb", de: "bringen", pl: "bringt, brachte", ru: "Приносить, приводить", exDe: "Bringen Sie mir bitte die Karte.", exRu: "Принесите мне, пожалуйста, меню." },
+      { art: "das", de: "Brot", pl: "die Brote", ru: "Хлеб", exDe: "Kauf bitte ein Brot.", exRu: "Купи, пожалуйста, хлеб." },
+      { art: "das", de: "Brötchen", pl: "die Brötchen", ru: "Булочка", exDe: "Zum Frühstück esse ich ein Brötchen.", exRu: "На завтрак я ем булочку." },
+      { art: "der", de: "Bruder", pl: "die Brüder", ru: "Брат", exDe: "Mein Bruder ist älter als ich.", exRu: "Мой брат старше меня." },
+      { art: "das", de: "Buch", pl: "die Bücher", ru: "Книга", exDe: "Das Buch ist sehr interessant.", exRu: "Книга очень интересная." },
+      { art: "verb", de: "buchstabieren", pl: "buchstabiert, buchstabierte", ru: "Называть по буквам", exDe: "Können Sie das bitte buchstabieren?", exRu: "Можете произнести это по буквам?" },
+      { art: "der", de: "Bus", pl: "die Busse", ru: "Автобус", exDe: "Wir fahren mit dem Bus.", exRu: "Мы едем на автобусе." },
+      { art: "die", de: "Butter", pl: "без мн. ч.", ru: "Сливочное масло", exDe: "Die Butter ist im Kühlschrank.", exRu: "Масло в холодильнике." }
+            ],
+            C: [
+                { art: "das", de: "Café", pl: "die Cafés", ru: "Кафе", exDe: "Wir trinken einen Kaffee im Café.", exRu: "Мы пьем кофе в кафе." },
+      { art: "die", de: "CD", pl: "die CDs", ru: "Компакт-диск", exDe: "Er hört eine CD.", exRu: "Он слушает диск." },
+      { art: "der", de: "Chef", pl: "die Chefs", ru: "Начальник, шеф", exDe: "Mein Chef ist sehr nett.", exRu: "Мой начальник очень симпатичный." },
+      { art: "die", de: "Chefin", pl: "die Chefinnen", ru: "Начальница", exDe: "Frau Müller ist unsere Chefin.", exRu: "Госпожа Мюллер — наша начальница." },
+      { art: "der", de: "Computer", pl: "die Computer", ru: "Компьютер", exDe: "Ich arbeite am Computer.", exRu: "Я работаю за компьютером." }
+            ],
+            D: [
+               { art: "-", de: "da", pl: "-", ru: "Тут, там, так как", exDe: "Herr Berg ist nicht da.", exRu: "Господина Берга нет на месте." },
+      { art: "die", de: "Dame", pl: "die Damen", ru: "Дама", exDe: "Damen und Herren!", exRu: "Дамы и господа!" },
+      { art: "-", de: "daneben", pl: "-", ru: "Рядом, возле этого", exDe: "Das Haus ist neu, daneben steht eine Garage.", exRu: "Дом новый, рядом с ним стоит гараж." },
+      { art: "verb", de: "danken", pl: "dankt, dankte", ru: "Благодарить", exDe: "Ich danke Ihnen für die Hilfe.", exRu: "Я благодарю вас за помощь." },
+      { art: "der", de: "Dank", pl: "без мн. ч.", ru: "Благодарность", exDe: "Vielen Dank!", exRu: "Большое спасибо!" },
+      { art: "-", de: "dann", pl: "-", ru: "Тогда, затем", exDe: "Ich gehe einkaufen, dann koche ich.", exRu: "Я пойду за покупками, затем буду готовить." },
+      { art: "das", de: "Datum", pl: "die Daten", ru: "Дата", exDe: "Welches Datum haben wir heute?", exRu: "Какая сегодня дата?" },
+      { art: "verb", de: "dauern", pl: "dauert, dauerte", ru: "Длиться, продолжаться", exDe: "Der Film dauert zwei Stunden.", exRu: "Фильм длится два часа." },
+      { art: "verb", de: "denken", pl: "denkt, dachte", ru: "Думать", exDe: "Was denkst du darüber?", exRu: "Что ты об этом думаешь?" },
+      { art: "-", de: "denn", pl: "-", ru: "Так как / же (в вопросах)", exDe: "Wie heißt du denn?", exRu: "Как же тебя зовут?" },
+      { art: "der", de: "Dezember", pl: "без мн. ч.", ru: "Декабрь", exDe: "Im Dezember schneit es oft.", exRu: "В декабре часто идет снег." },
+      { art: "-", de: "dich", pl: "-", ru: "Тебя (Akkusativ)", exDe: "Ich liebe dich.", exRu: "Я люблю тебя." },
+      { art: "-", de: "dir", pl: "-", ru: "Тебе (Dativ)", exDe: "Wie geht es dir?", exRu: "Как у тебя дела?" },
+      { art: "der", de: "Dienstag", pl: "die Dienstage", ru: "Вторник", exDe: "Am Dienstag habe ich frei.", exRu: "Во вторник у меня выходной." },
+      { art: "-", de: "direkt", pl: "-", ru: "Прямо, напрямую", exDe: "Wir wohnen direkt am Park.", exRu: "Мы живем прямо у парка." },
+      { art: "die", de: "Disko", pl: "die Diskos", ru: "Дискотека", exDe: "Wir gehen in die Disko.", exRu: "Мы идем на дискотеку." },
+      { art: "der", de: "Doktor", pl: "die Doktoren", ru: "Доктор, врач", exDe: "Der Doktor untersucht den Patienten.", exRu: "Врач осматривает пациента." },
+      { art: "der", de: "Donnerstag", pl: "die Donnerstage", ru: "Четверг", exDe: "Donnerstag passt mir gut.", exRu: "Четверг мне подходит." },
+      { art: "das", de: "Doppelzimmer", pl: "die Doppelzimmer", ru: "Двухместный номер", exDe: "Wir hätten gern ein Doppelzimmer.", exRu: "Мы бы хотели двухместный номер." },
+      { art: "das", de: "Dorf", pl: "die Dörfer", ru: "Деревня", exDe: "Das Dorf ist sehr ruhig.", exRu: "Деревня очень тихая." },
+      { art: "-", de: "dort", pl: "-", ru: "Там", exDe: "Dort steht mein Auto.", exRu: "Там стоит моя машина." },
+      { art: "-", de: "draußen", pl: "-", ru: "Снаружи, на улице", exDe: "Es ist kalt draußen.", exRu: "На улице холодно." },
+      { art: "verb", de: "drucken", pl: "druckt, druckte", ru: "Печатать (на принтере)", exDe: "Ich drucke das Formular aus.", exRu: "Я распечатываю форму." },
+      { art: "der", de: "Drucker", pl: "die Drucker", ru: "Принтер", exDe: "Der Drucker funktioniert nicht.", exRu: "Принтер не работает." },
+      { art: "verb", de: "drücken", pl: "drückt, drückte", ru: "Нажимать", exDe: "Drücken Sie den Knopf!", exRu: "Нажмите на кнопку!" },
+      { art: "-", de: "durch", pl: "-", ru: "Через, сквозь", exDe: "Wir gehen durch den Park.", exRu: "Мы идем через парк." },
+      { art: "die", de: "Durchsage", pl: "die Durchsagen", ru: "Объявление по громкой связи", exDe: "Achtung, eine Durchsage!", exRu: "Внимание, объявление!" },
+      { art: "verb", de: "dürfen", pl: "darf, durfte", ru: "Мочь (иметь разрешение)", exDe: "Darf ich hier rauchen?", exRu: "Можно мне здесь курить?" },
+      { art: "der", de: "Durst", pl: "без мн. ч.", ru: "Жажда", exDe: "Ich habe großen Durst.", exRu: "Я очень хочу пить." },
+      { art: "die", de: "Dusche", pl: "die Duschen", ru: "Душ", exDe: "Die Dusche ist sauber.", exRu: "Душ чистый." },
+      { art: "verb", de: "duschen", pl: "duscht, duschte", ru: "Принимать душ", exDe: "Ich dusche jeden Morgen.", exRu: "Я принимаю душ каждое утро." }
+            ],
+            E: [
+                { art: "-", de: "echt", pl: "-", ru: "Настоящий, подлинный / Действительно", exDe: "Ist das Bild echt?", exRu: "Эта картина настоящая?" },
+      { art: "die", de: "Ecke", pl: "die Ecken", ru: "Угол", exDe: "An der Ecke steht ein Kiosk.", exRu: "На углу стоит киоск." },
+      { art: "-", de: "egal", pl: "-", ru: "Всё равно, без разницы", exDe: "Das ist mir egal.", exRu: "Мне всё равно." },
+      { art: "die", de: "Ehefrau", pl: "die Ehefrauen", ru: "Жена, супруга", exDe: "Das ist meine Ehefrau.", exRu: "Это моя жена." },
+      { art: "der", de: "Ehemann", pl: "die Ehemänner", ru: "Муж, супруг", exDe: "Ihr Ehemann arbeitet in Berlin.", exRu: "Её муж работает в Берлине." },
+      { art: "das", de: "Ei", pl: "die Eier", ru: "Яйцо", exDe: "Möchtest du ein Ei zum Frühstück?", exRu: "Хочешь яйцо на завтрак?" },
+      { art: "-", de: "eigen-", pl: "-", ru: "Собственный", exDe: "Ich habe ein eigenes Zimmer.", exRu: "У меня есть собственная комната." },
+      { art: "verb", de: "eilen", pl: "eilt, eilte", ru: "Спешить, торопиться", exDe: "Es eilt nicht.", exRu: "Это не к спеху." },
+      { art: "-", de: "eilig", pl: "-", ru: "Срочный / Спешащий", exDe: "Ich habe es eilig.", exRu: "Я спешу." },
+      { art: "-", de: "ein-", pl: "-", ru: "Один, какой-то (неопределенный артикль)", exDe: "Ich kaufe ein Buch.", exRu: "Я покупаю книгу." },
+      { art: "-", de: "einfach", pl: "-", ru: "Простой / Просто", exDe: "Die Aufgabe ist einfach.", exRu: "Задание простое." },
+      { art: "der", de: "Eingang", pl: "die Eingänge", ru: "Вход", exDe: "Der Eingang ist um die Ecke.", exRu: "Вход за углом." },
+      { art: "verb", de: "einkaufen", pl: "kauft ein, kaufte ein", ru: "Делать покупки", exDe: "Ich kaufe im Supermarkt ein.", exRu: "Я делаю покупки в супермаркете." },
+      { art: "der", de: "Einkauf", pl: "die Einkäufe", ru: "Покупка", exDe: "Ich mache die Einkäufe.", exRu: "Я делаю покупки." },
+      { art: "verb", de: "einladen", pl: "lädt ein, lud ein", ru: "Приглашать", exDe: "Ich lade dich zum Geburtstag ein.", exRu: "Я приглашаю тебя на день рождения." },
+      { art: "die", de: "Einladung", pl: "die Einladungen", ru: "Приглашение", exDe: "Danke für die Einladung!", exRu: "Спасибо за приглашение!" },
+      { art: "-", de: "einmal", pl: "-", ru: "Однажды, один раз", exDe: "Ich war nur einmal in Berlin.", exRu: "Я был в Берлине только один раз." },
+      { art: "verb", de: "einschalten", pl: "schaltet ein, schaltete ein", ru: "Включать (прибор)", exDe: "Schalte bitte den Fernseher ein!", exRu: "Включи, пожалуйста, телевизор!" },
+      { art: "verb", de: "einsteigen", pl: "steigt ein, stieg ein", ru: "Садиться (в транспорт)", exDe: "Bitte alle einsteigen!", exRu: "Пожалуйста, все на посадку!" },
+      { art: "der", de: "Eintritt", pl: "die Eintritte", ru: "Вход (плата за вход)", exDe: "Der Eintritt ist frei.", exRu: "Вход бесплатный." },
+      { art: "verb", de: "einziehen", pl: "zieht ein, zog ein", ru: "Въезжать (в квартиру)", exDe: "Wir ziehen nächste Woche ein.", exRu: "Мы въезжаем на следующей неделе." },
+      { art: "das", de: "Eis", pl: "без мн. ч.", ru: "Мороженое / Лёд", exDe: "Ich möchte ein Eis essen.", exRu: "Я хочу съесть мороженое." },
+      { art: "die", de: "Eltern", pl: "только мн. ч.", ru: "Родители", exDe: "Meine Eltern wohnen in München.", exRu: "Мои родители живут в Мюнхене." },
+      { art: "die", de: "E-Mail", pl: "die E-Mails", ru: "Электронная почта / Письмо", exDe: "Schreib mir eine E-Mail.", exRu: "Напиши мне электронное письмо." },
+      { art: "verb", de: "empfehlen", pl: "empfiehlt, empfahl", ru: "Рекомендовать, советовать", exDe: "Was können Sie empfehlen?", exRu: "Что вы можете порекомендовать?" },
+      { art: "die", de: "Endung", pl: "die Endungen", ru: "Окончание (граммат.)", exDe: "Wie ist die Endung hier?", exRu: "Какое здесь окончание?" },
+      { art: "das", de: "Ende", pl: "die Enden", ru: "Конец", exDe: "Die Straße ist zu Ende.", exRu: "Улица заканчивается." },
+      { art: "verb", de: "enden", pl: "endet, endete", ru: "Заканчиваться", exDe: "Der Kurs endet im August.", exRu: "Курс заканчивается в августе." },
+      { art: "-", de: "englisch", pl: "-", ru: "Английский", exDe: "Sprechen Sie Englisch?", exRu: "Вы говорите по-английски?" },
+      { art: "der", de: "Enkel", pl: "die Enkel", ru: "Внук", exDe: "Mein Enkel besucht mich.", exRu: "Мой внук навещает меня." },
+      { art: "die", de: "Enkelin", pl: "die Enkelinnen", ru: "Внучка", exDe: "Meine Enkelin geht in die Schule.", exRu: "Моя внучка ходит в школу." },
+      { art: "verb", de: "entschuldigen", pl: "entschuldigt, entschuldigte", ru: "Извинять, извиняться", exDe: "Entschuldigen Sie bitte!", exRu: "Извините, пожалуйста!" },
+      { art: "die", de: "Entschuldigung", pl: "die Entschuldigungen", ru: "Извинение", exDe: "Entschuldigung, wie viel Uhr ist es?", exRu: "Извините, который час?" },
+      { art: "-", de: "er", pl: "-", ru: "Он", exDe: "Er heißt Thomas.", exRu: "Его зовут Томас." },
+      { art: "das", de: "Erdgeschoss", pl: "die Erdgeschosse", ru: "Первый / Цокольный этаж", exDe: "Die Wohnung liegt im Erdgeschoss.", exRu: "Квартира находится на первом этаже." },
+      { art: "die", de: "Erfahrung", pl: "die Erfahrungen", ru: "Опыт", exDe: "Ich habe viel Erfahrung.", exRu: "У меня много опыта." },
+      { art: "das", de: "Ergebnis", pl: "die Ergebnisse", ru: "Результат", exDe: "Das Ergebnis ist gut.", exRu: "Результат хороший." },
+      { art: "verb", de: "erklären", pl: "erklärt, erklärte", ru: "Объяснять", exDe: "Können Sie das bitte erklären?", exRu: "Можете, пожалуйста, объяснить это?" },
+      { art: "verb", de: "erlauben", pl: "erlaubt, erlaubte", ru: "Разрешать", exDe: "Rauchen ist hier nicht erlaubt.", exRu: "Курение здесь не разрешено." },
+      { art: "der", de: "Erwachsene", pl: "die Erwachsenen", ru: "Взрослый", exDe: "Die Fahrkarte für Erwachsene kostet 5 Euro.", exRu: "Билет для взрослых стоит 5 евро." },
+      { art: "verb", de: "erzählen", pl: "erzählt, erzählte", ru: "Рассказывать", exDe: "Erzählen Sie bitte noch mehr.", exRu: "Расскажите, пожалуйста, побольше." },
+      { art: "-", de: "es", pl: "-", ru: "Оно", exDe: "Es regnet heute.", exRu: "Сегодня идет дождь." },
+      { art: "das", de: "Essen", pl: "die Essen", ru: "Еда / Прием пищи", exDe: "Das Essen ist sehr lecker.", exRu: "Еда очень вкусная." },
+      { art: "verb", de: "essen", pl: "isst, aß", ru: "Есть, кушать", exDe: "Wir essen um 19 Uhr.", exRu: "Мы едим в 19:00." },
+      { art: "-", de: "euer", pl: "-", ru: "Ваш (принадлежащий вам)", exDe: "Ist das euer Auto?", exRu: "Это ваша машина?" }
+            ],
+            F: [
+                { art: "verb", de: "fahren", pl: "fährt, fuhr", ru: "Ехать, вести машину", exDe: "Ich fahre mit dem Zug nach Berlin.", exRu: "Я еду на поезде в Берлин." },
+      { art: "der", de: "Fahrer", pl: "die Fahrer", ru: "Водитель", exDe: "Der Fahrer ist sehr freundlich.", exRu: "Водитель очень дружелюбный." },
+      { art: "die", de: "Fahrkarte", pl: "die Fahrkarten", ru: "Билет на проезд", exDe: "Haben Sie schon eine Fahrkarte?", exRu: "У вас уже есть билет?" },
+      { art: "der", de: "Fahrkartenschalter", pl: "die Fahrkartenschalter", ru: "Билетная касса", exDe: "Der Fahrkartenschalter ist da vorne.", exRu: "Билетная касса вон там." },
+      { art: "der", de: "Fahrplan", pl: "die Fahrpläne", ru: "Расписание движения", exDe: "Ich lese den Fahrplan.", exRu: "Я читаю расписание." },
+      { art: "das", de: "Fahrrad", pl: "die Fahrräder", ru: "Велосипед", exDe: "Er fährt gerne mit dem Fahrrad.", exRu: "Он любит кататься на велосипеде." },
+      { art: "-", de: "falsch", pl: "-", ru: "Неправильный, ложный", exDe: "Das ist leider falsch.", exRu: "К сожалению, это неправильно." },
+      { art: "die", de: "Familie", pl: "die Familien", ru: "Семья", exDe: "Meine Familie ist sehr groß.", exRu: "Моя семья очень большая." },
+      { art: "der", de: "Familienname", pl: "die Familiennamen", ru: "Фамилия", exDe: "Mein Familienname ist Müller.", exRu: "Моя фамилия — Мюллер." },
+      { art: "der", de: "Familienstand", pl: "без мн. ч.", ru: "Семейное положение", exDe: "Familienstand: ledig.", exRu: "Семейное положение: холост / не замужем." },
+      { art: "die", de: "Farbe", pl: "die Farben", ru: "Цвет, краска", exDe: "Welche Farbe hat dein Auto?", exRu: "Какого цвета твоя машина?" },
+      { art: "das", de: "Fax", pl: "die Faxe", ru: "Факс", exDe: "Schicken Sie uns bitte ein Fax.", exRu: "Отправьте нам, пожалуйста, факс." },
+      { art: "der", de: "Februar", pl: "без мн. ч.", ru: "Февраль", exDe: "Im Februar ist es kalt.", exRu: "В феврале холодно." },
+      { art: "verb", de: "fehlen", pl: "fehlt, fehlte", ru: "Отсутствовать, не хватать", exDe: "Wer fehlt heute?", exRu: "Кто сегодня отсутствует?" },
+      { art: "der", de: "Fehler", pl: "die Fehler", ru: "Ошибка", exDe: "Das ist kein Fehler.", exRu: "Это не ошибка." },
+      { art: "verb", de: "feiern", pl: "feiert, feierte", ru: "Праздновать", exDe: "Wir feiern seinen Geburtstag.", exRu: "Мы празднуем его день рождения." },
+      { art: "die", de: "Freizeit", pl: "без мн. ч.", ru: "Свободное время", exDe: "In der Freizeit lese ich viel.", exRu: "В свободное время я много читаю." },
+      { art: "das", de: "Fenster", pl: "die Fenster", ru: "Окно", exDe: "Öffne bitte das Fenster!", exRu: "Открой, пожалуйста, окно!" },
+      { art: "das", de: "Fernsehen", pl: "без мн. ч.", ru: "Телевидение", exDe: "Was kommt heute im Fernsehen?", exRu: "Что сегодня показывают по телевизору?" },
+      { art: "verb", de: "fernsehen", pl: "sieht fern, sah fern", ru: "Смотреть телевизор", exDe: "Abends sehe ich oft fern.", exRu: "По вечерам я часто смотрю телевизор." },
+      { art: "der", de: "Fernseher", pl: "die Fernseher", ru: "Телевизор (прибор)", exDe: "Der Fernseher ist kaputt.", exRu: "Телевизор сломан." },
+      { art: "-", de: "fertig", pl: "-", ru: "Готовый", exDe: "Das Essen ist fertig.", exRu: "Еда готова." },
+      { art: "das", de: "Feuer", pl: "die Feuer", ru: "Огонь, пожар", exDe: "Haben Sie Feuer?", exRu: "У вас есть прикурить?" },
+      { art: "die", de: "Feuerwehr", pl: "die Feuerwehren", ru: "Пожарная служба", exDe: "Rufen Sie die Feuerwehr!", exRu: "Вызовите пожарных!" },
+      { art: "der", de: "Film", pl: "die Filme", ru: "Фильм", exDe: "Der Film ist sehr gut.", exRu: "Фильм очень хороший." },
+      { art: "verb", de: "finden", pl: "findet, fand", ru: "Находить, считать (мнение)", exDe: "Ich finde den Schlüssel nicht.", exRu: "Я не могу найти ключ." },
+      { art: "der", de: "Fisch", pl: "die Fische", ru: "Рыба", exDe: "Ich esse gerne Fisch.", exRu: "Я люблю есть рыбу." },
+      { art: "-", de: "fit", pl: "-", ru: "В хорошей форме, подтянутый", exDe: "Ich halte mich fit.", exRu: "Я держу себя в форме." },
+      { art: "die", de: "Flasche", pl: "die Flaschen", ru: "Бутылка", exDe: "Eine Flasche Wasser, bitte.", exRu: "Бутылку воды, пожалуйста." },
+      { art: "das", de: "Fleisch", pl: "без мн. ч.", ru: "Мясо", exDe: "Fleisch schmeckt gut.", exRu: "Мясо вкусное." },
+      { art: "verb", de: "fliegen", pl: "fliegt, flog", ru: "Летать", exDe: "Wir fliegen nach Spanien.", exRu: "Мы летим в Испанию." },
+      { art: "der", de: "Flughafen", pl: "die Flughäfen", ru: "Аэропорт", exDe: "Der Flughafen ist groß.", exRu: "Аэропорт большой." },
+      { art: "das", de: "Flugzeug", pl: "die Flugzeuge", ru: "Самолет", exDe: "Das Flugzeug landet jetzt.", exRu: "Самолет сейчас садится." },
+      { art: "der", de: "Fluss", pl: "die Flüsse", ru: "Река", exDe: "Der Rhein ist ein Fluss.", exRu: "Рейн — это река." },
+      { art: "das", de: "Formular", pl: "die Formulare", ru: "Формуляр, бланк", exDe: "Füllen Sie dieses Formular aus.", exRu: "Заполните этот бланк." },
+      { art: "das", de: "Foto", pl: "die Fotos", ru: "Фотография", exDe: "Darf ich ein Foto machen?", exRu: "Могу я сделать фото?" },
+      { art: "die", de: "Frage", pl: "die Fragen", ru: "Вопрос", exDe: "Ich habe eine Frage.", exRu: "У меня есть вопрос." },
+      { art: "verb", de: "fragen", pl: "fragt, fragte", ru: "Спрашивать", exDe: "Fragen Sie die Lehrerin.", exRu: "Спросите учительницу." },
+      { art: "die", de: "Frau", pl: "die Frauen", ru: "Женщина, госпожа, жена", exDe: "Das ist Frau Bauer.", exRu: "Это госпожа Бауэр." },
+      { art: "-", de: "frei", pl: "-", ru: "Свободный, бесплатный", exDe: "Ist dieser Platz frei?", exRu: "Это место свободно?" },
+      { art: "der", de: "Freitag", pl: "die Freitage", ru: "Пятница", exDe: "Am Freitag habe ich Zeit.", exRu: "В пятницу у меня есть время." },
+      { art: "-", de: "fremd", pl: "-", ru: "Чужой, незнакомый", exDe: "Ich bin hier fremd.", exRu: "Я здесь чужой / приезжий." },
+      { art: "verb", de: "freuen", pl: "freut, freute", ru: "Радовать(ся)", exDe: "Ich freue mich auf dich.", exRu: "Я с нетерпением жду встречи с тобой." },
+      { art: "der", de: "Freund", pl: "die Freunde", ru: "Друг", exDe: "Das ist mein Freund.", exRu: "Это мой друг." },
+      { art: "die", de: "Freundin", pl: "die Freundinnen", ru: "Подруга", exDe: "Meine Freundin heißt Lisa.", exRu: "Мою подругу зовут Лиза." },
+      { art: "-", de: "freundlich", pl: "-", ru: "Приветливый, дружелюбный", exDe: "Er ist sehr freundlich.", exRu: "Он очень дружелюбный." },
+      { art: "-", de: "frisch", pl: "-", ru: "Свежий", exDe: "Das Brot ist frisch.", exRu: "Хлеб свежий." },
+      { art: "der", de: "Friseur", pl: "die Friseure", ru: "Парикмахер", exDe: "Ich gehe zum Friseur.", exRu: "Я иду к парикмахеру." },
+      { art: "-", de: "früh", pl: "-", ru: "Рано", exDe: "Ich stehe früh auf.", exRu: "Я встаю рано." },
+      { art: "der", de: "Frühling", pl: "die Frühlinge", ru: "Весна", exDe: "Der Frühling kommt.", exRu: "Наступает весна." },
+      { art: "das", de: "Frühstück", pl: "die Frühstücke", ru: "Завтрак", exDe: "Das Frühstück steht bereit.", exRu: "Завтрак готов." },
+      { art: "verb", de: "frühstücken", pl: "frühstückt, frühstückte", ru: "Завтракать", exDe: "Wir frühstücken um 8 Uhr.", exRu: "Мы завтракаем в 8 часов." },
+      { art: "verb", de: "fühlen", pl: "fühlt, fühlte", ru: "Чувствовать (себя)", exDe: "Wie fühlen Sie sich?", exRu: "Как вы себя чувствуете?" },
+      { art: "die", de: "Führung", pl: "die Führungen", ru: "Экскурсия", exDe: "Die Führung beginnt um 11 Uhr.", exRu: "Экскурсия начинается в 11:00." },
+      { art: "der", de: "Führerschein", pl: "die Führerscheine", ru: "Водительские права", exDe: "Ich habe den Führerschein gemacht.", exRu: "Я получил водительские права." },
+      { art: "verb", de: "füllen", pl: "füllt, füllte", ru: "Наполнять", exDe: "Füllen Sie das Glas mit Wasser.", exRu: "Наполните стакан водой." },
+      { art: "der", de: "Fuß", pl: "die Füße", ru: "Ступня, нога", exDe: "Ich gehe zu Fuß.", exRu: "Я иду пешком." },
+      { art: "der", de: "Fußball", pl: "die Fußbälle", ru: "Футбол, футбольный мяч", exDe: "Er spielt gerne Fußball.", exRu: "Он любит играть в футбол." }
+            ],
+            G: [
+                { art: "die", de: "Gabel", pl: "die Gabeln", ru: "Вилка", exDe: "Ich brauche eine Gabel.", exRu: "Мне нужна вилка." },
+      { art: "-", de: "ganz", pl: "-", ru: "Весь, целый / Совсем, полностью", exDe: "Das ist ganz einfach.", exRu: "Это совсем просто." },
+      { art: "die", de: "Garage", pl: "die Garagen", ru: "Гараж", exDe: "Das Auto steht in der Garage.", exRu: "Машина стоит в гараже." },
+      { art: "der", de: "Garten", pl: "die Gärten", ru: "Сад", exDe: "Wir haben einen schönen Garten.", exRu: "У нас красивый сад." },
+      { art: "der", de: "Gast", pl: "die Gäste", ru: "Гость", exDe: "Wir haben heute Gäste.", exRu: "У нас сегодня гости." },
+      { art: "verb", de: "geben", pl: "gibt, gab", ru: "Давать", exDe: "Gibst du mir bitte das Salz?", exRu: "Дашь мне, пожалуйста, соль?" },
+      { art: "-", de: "geboren", pl: "-", ru: "Рождённый, родившийся", exDe: "Ich bin in Moskau geboren.", exRu: "Я родился в Москве." },
+      { art: "die", de: "Geburt", pl: "die Geburten", ru: "Рождение", exDe: "Herzlichen Glückwunsch zur Geburt!", exRu: "Поздравляю с рождением ребенка!" },
+      { art: "das", de: "Geburtsdatum", pl: "die Geburtsdaten", ru: "Дата рождения", exDe: "Geben Sie bitte Ihr Geburtsdatum an.", exRu: "Укажите, пожалуйста, вашу дату рождения." },
+      { art: "der", de: "Geburtsort", pl: "die Geburtsorte", ru: "Место рождения", exDe: "Mein Geburtsort ist Berlin.", exRu: "Мое место рождения — Берлин." },
+      { art: "der", de: "Geburtstag", pl: "die Geburtstage", ru: "День рождения", exDe: "Herzlichen Glückwunsch zum Geburtstag!", exRu: "С днем рождения!" },
+      { art: "verb", de: "gefallen", pl: "gefällt, gefiel", ru: "Нравиться", exDe: "Das Buch gefällt mir gut.", exRu: "Книга мне очень нравится." },
+      { art: "-", de: "gegen", pl: "-", ru: "Против / Около (о времени)", exDe: "Ich komme gegen 18 Uhr.", exRu: "Я приду около 18 часов." },
+      { art: "-", de: "gegenüber", pl: "-", ru: "Напротив", exDe: "Die Bank ist gegenüber vom Bahnhof.", exRu: "Банк находится напротив вокзала." },
+      { art: "verb", de: "gehen", pl: "geht, ging", ru: "Идти, ходить", exDe: "Ich gehe nach Hause.", exRu: "Я иду домой." },
+      { art: "verb", de: "gehören", pl: "gehört, gehörte", ru: "Принадлежать", exDe: "Wem gehört dieses Buch?", exRu: "Кому принадлежит эта книга?" },
+      { art: "das", de: "Geld", pl: "без мн. ч.", ru: "Деньги", exDe: "Ich habe kein Geld dabei.", exRu: "У меня нет с собой денег." },
+      { art: "die", de: "Geldbörse", pl: "die Geldbörsen", ru: "Кошелек", exDe: "Meine Geldbörse ist weg.", exRu: "Мой кошелек пропал." },
+      { art: "-", de: "gemütlich", pl: "-", ru: "Уютный", exDe: "Das Zimmer ist sehr gemütlich.", exRu: "Комната очень уютная." },
+      { art: "-", de: "genau", pl: "-", ru: "Точный / Точно", exDe: "Das weiß ich nicht genau.", exRu: "Я не знаю это точно." },
+      { art: "-", de: "gern", pl: "-", ru: "Охотно, с удовольствием", exDe: "Ich trinke gern Tee.", exRu: "Я люблю пить чай." },
+      { art: "das", de: "Gericht", pl: "die Gerichte", ru: "Блюдо", exDe: "Das Gericht schmeckt lecker.", exRu: "Блюдо вкусное." },
+      { art: "das", de: "Geschäft", pl: "die Geschäfte", ru: "Магазин, дело", exDe: "Das Geschäft schließt um 20 Uhr.", exRu: "Магазин закрывается в 20:00." },
+      { art: "das", de: "Geschenk", pl: "die Geschenke", ru: "Подарок", exDe: "Danke für das Geschenk!", exRu: "Спасибо за подарок!" },
+      { art: "die", de: "Geschwister", pl: "только мн. ч.", ru: "Братья и сестры", exDe: "Hast du Geschwister?", exRu: "У тебя есть братья или сестры?" },
+      { art: "das", de: "Gesicht", pl: "die Gesichter", ru: "Лицо", exDe: "Wasche dir das Gesicht!", exRu: "Умой лицо!" },
+      { art: "-", de: "gesund", pl: "-", ru: "Здоровый", exDe: "Bleiben Sie gesund!", exRu: "Будьте здоровы!" },
+      { art: "das", de: "Getränk", pl: "die Getränke", ru: "Напиток", exDe: "Welche Getränke möchtest du?", exRu: "Какие напитки ты хочешь?" },
+      { art: "verb", de: "gewinnen", pl: "gewinnt, gewann", ru: "Выигрывать", exDe: "Er gewinnt das Spiel.", exRu: "Он выигрывает игру." },
+      { art: "das", de: "Glas", pl: "die Gläser", ru: "Стакан, стекло", exDe: "Ein Glas Wasser, bitte.", exRu: "Стакан воды, пожалуйста." },
+      { art: "verb", de: "glauben", pl: "glaubt, glaubte", ru: "Верить, думать, полагать", exDe: "Ich glaube, er kommt heute.", exRu: "Думаю, он сегодня придет." },
+      { art: "-", de: "gleich", pl: "-", ru: "Сейчас, тотчас / Одинаковый", exDe: "Ich komme gleich.", exRu: "Я сейчас приду." },
+      { art: "das", de: "Glück", pl: "без мн. ч.", ru: "Счастье, удача", exDe: "Viel Glück!", exRu: "Желаю удачи!" },
+      { art: "-", de: "glücklich", pl: "-", ru: "Счастливый", exDe: "Ich bin sehr glücklich.", exRu: "Я очень счастлив." },
+      { art: "verb", de: "gratulieren", pl: "gratuliert, gratulierte", ru: "Поздравлять", exDe: "Ich gratuliere dir zum Geburtstag!", exRu: "Поздравляю тебя с днем рождения!" },
+      { art: "-", de: "groß", pl: "-", ru: "Большой, высокий", exDe: "Die Wohnung ist sehr groß.", exRu: "Квартира очень большая." },
+      { art: "die", de: "Großeltern", pl: "только мн. ч.", ru: "Дедушка и бабушка", exDe: "Meine Großeltern wohnen auf dem Land.", exRu: "Мои бабушка и дедушка живут за городом." },
+      { art: "die", de: "Großmutter", pl: "die Großmütter", ru: "Бабушка", exDe: "Meine Großmutter kocht sehr gut.", exRu: "Моя бабушка отлично готовит." },
+      { art: "der", de: "Großvater", pl: "die Großväter", ru: "Дедушка", exDe: "Mein Großvater liest eine Zeitung.", exRu: "Мой дедушка читает газету." },
+      { art: "die", de: "Gruppe", pl: "die Gruppen", ru: "Группа", exDe: "Die Gruppe lernt Deutsch.", exRu: "Группа учит немецкий." },
+      { art: "-", de: "gut", pl: "-", ru: "Хороший / Хорошо", exDe: "Das ist eine gute Idee.", exRu: "Это хорошая идея." }
+            ],
+            H: [
+                { art: "verb", de: "haben", pl: "hat, hatte", ru: "Иметь", exDe: "Ich habe Zeit.", exRu: "У меня есть время." },
+      { art: "der", de: "Hafen", pl: "die Häfen", ru: "Порт, гавань", exDe: "Das Schiff liegt im Hafen.", exRu: "Корабль стоит в порту." },
+      { art: "das", de: "Hähnchen", pl: "die Hähnchen", ru: "Курица, цыпленок", exDe: "Ich esse gern Hähnchen mit Pommes.", exRu: "Я люблю курицу с картошкой фри." },
+      { art: "die", de: "Halbpension", pl: "без мн. ч.", ru: "Полупансион", exDe: "Wir haben das Hotel mit Halbpension gebucht.", exRu: "Мы забронировали отель с полупансионом." },
+      { art: "die", de: "Halle", pl: "die Hallen", ru: "Зал, холл", exDe: "Wir treffen uns in der Halle.", exRu: "Встретимся в зале." },
+      { art: "-", de: "hallo", pl: "-", ru: "Привет!", exDe: "Hallo, wie geht's?", exRu: "Привет, как дела?" },
+      { art: "die", de: "Haltestelle", pl: "die Haltestellen", ru: "Остановка", exDe: "Die Haltestelle ist nah.", exRu: "Остановка близко." },
+      { art: "die", de: "Hand", pl: "die Hände", ru: "Рука (кисть)", exDe: "Wasche dir die Hände!", exRu: "Помой руки!" },
+      { art: "das", de: "Handy", pl: "die Handys", ru: "Мобильный телефон", exDe: "Hier ist meine Handynummer.", exRu: "Вот номер моего мобильного." },
+      { art: "der", de: "Hauptbahnhof", pl: "die Hauptbahnhöfe", ru: "Главный вокзал", exDe: "Der Zug kommt am Hauptbahnhof an.", exRu: "Поезд прибывает на главный вокзал." },
+      { art: "die", de: "Hausnummer", pl: "die Hausnummern", ru: "Номер дома", exDe: "Wie ist deine Hausnummer?", exRu: "Какой у тебя номер дома?" },
+      { art: "die", de: "Hausfrau", pl: "die Hausfrauen", ru: "Домохозяйка", exDe: "Sie ist Hausfrau.", exRu: "Она домохозяйка." },
+      { art: "der", de: "Haushalt", pl: "die Haushalte", ru: "Домашнее хозяйство", exDe: "Ich mache den Haushalt.", exRu: "Я веду домашнее хозяйство." },
+      { art: "die", de: "Heimat", pl: "без мн. ч.", ru: "Родина", exDe: "Meine Heimat ist sehr schön.", exRu: "Моя родина очень красивая." },
+      { art: "verb", de: "heiraten", pl: "heiratet, heiratete", ru: "Жениться, выходить замуж", exDe: "Wir heiraten im Juni.", exRu: "Мы поженимся в июне." },
+      { art: "verb", de: "heißen", pl: "heißt, hieß", ru: "Зваться, называться", exDe: "Ich heiße Anton.", exRu: "Меня зовут Антон." },
+      { art: "verb", de: "helfen", pl: "hilft, half", ru: "Помогать", exDe: "Können Sie mir helfen?", exRu: "Можете мне помочь?" },
+      { art: "-", de: "hell", pl: "-", ru: "Светлый", exDe: "Das Zimmer ist sehr hell.", exRu: "Комната очень светлая." },
+      { art: "der", de: "Herd", pl: "die Herde", ru: "Плита (кухонная)", exDe: "Der Herd ist noch heiß.", exRu: "Плита еще горячая." },
+      { art: "der", de: "Herr", pl: "die Herren", ru: "Господин", exDe: "Guten Tag, Herr Braun!", exRu: "Добрый день, господин Браун!" },
+      { art: "-", de: "herzlich", pl: "-", ru: "Сердечный, искренний", exDe: "Herzlichen Glückwunsch!", exRu: "Сердечные поздравления!" },
+      { art: "-", de: "heute", pl: "-", ru: "Сегодня", exDe: "Heute ist das Wetter gut.", exRu: "Сегодня хорошая погода." },
+      { art: "-", de: "hier", pl: "-", ru: "Здесь, тут", exDe: "Ich wohne hier.", exRu: "Я живу здесь." },
+      { art: "die", de: "Hilfe", pl: "без мн. ч.", ru: "Помощь", exDe: "Vielen Dank für Ihre Hilfe!", exRu: "Большое спасибо за вашу помощь!" },
+      { art: "-", de: "hinten", pl: "-", ru: "Сзади, позади", exDe: "Die Toiletten sind hinten.", exRu: "Туалеты находятся сзади." },
+      { art: "das", de: "Hobby", pl: "die Hobbys", ru: "Хобби, увлечение", exDe: "Mein Hobby ist Schwimmen.", exRu: "Мое хобби — плавание." },
+      { art: "-", de: "hoch", pl: "-", ru: "Высокий", exDe: "Das Haus ist sehr hoch.", exRu: "Дом очень высокий." },
+      { art: "verb", de: "holen", pl: "holt, holte", ru: "Приносить, приводить, забирать", exDe: "Ich hole schnell ein Glas Wasser.", exRu: "Я быстро принесу стакан воды." },
+      { art: "verb", de: "hören", pl: "hört, hörte", ru: "Слышать, слушать", exDe: "Ich höre gerne Musik.", exRu: "Я люблю слушать музыку." },
+      { art: "das", de: "Hotel", pl: "die Hotels", ru: "Отель, гостиница", exDe: "Das Hotel liegt im Zentrum.", exRu: "Отель находится в центре." },
+      { art: "der", de: "Hund", pl: "die Hunde", ru: "Собака", exDe: "Der Hund bellt.", exRu: "Собака лает." },
+      { art: "der", de: "Hunger", pl: "без мн. ч.", ru: "Голод", exDe: "Ich habe Hunger.", exRu: "Я голоден." }
+            ],
+            I: [
+                { art: "-", de: "ich", pl: "-", ru: "Я", exDe: "Ich heiße Anton.", exRu: "Меня зовут Антон." },
+      { art: "-", de: "ihm", pl: "-", ru: "Ему", exDe: "Ich gebe ihm das Buch.", exRu: "Я даю ему книгу." },
+      { art: "-", de: "ihn", pl: "-", ru: "Его (Akkusativ)", exDe: "Ich kenne ihn gut.", exRu: "Я хорошо его знаю." },
+      { art: "-", de: "ihnen", pl: "-", ru: "Им / Вам (Dativ)", exDe: "Wie geht es Ihnen?", exRu: "Как у Вас дела?" },
+      { art: "-", de: "ihr", pl: "-", ru: "Вы (мн.ч.) / Её / Их / Ей", exDe: "Ihr lernt Deutsch.", exRu: "Вы учите немецкий." },
+      { art: "-", de: "immer", pl: "-", ru: "Всегда", exDe: "Er kommt immer pünktlich.", exRu: "Он всегда приходит вовремя." },
+      { art: "-", de: "in", pl: "-", ru: "В", exDe: "Ich wohne in Berlin.", exRu: "Я живу в Берлине." },
+      { art: "die", de: "Information", pl: "die Informationen", ru: "Информация", exDe: "Hier bekommen Sie Informationen.", exRu: "Здесь вы получите информацию." },
+      { art: "-", de: "international", pl: "-", ru: "Международный", exDe: "Das ist ein internationales Projekt.", exRu: "Это международный проект." },
+      { art: "das", de: "Internet", pl: "без мн. ч.", ru: "Интернет", exDe: "Ich finde die Adresse im Internet.", exRu: "Я найду адрес в интернете." }
+            ],
+            J: [
+                { art: "-", de: "ja", pl: "-", ru: "Да", exDe: "Ja, das stimmt.", exRu: "Да, это верно." },
+      { art: "die", de: "Jacke", pl: "die Jacken", ru: "Куртка, пиджак", exDe: "Zieh die Jacke an!", exRu: "Надень куртку!" },
+      { art: "das", de: "Jahr", pl: "die Jahre", ru: "Год", exDe: "Ich bin 25 Jahre alt.", exRu: "Мне 25 лет." },
+      { art: "der", de: "Januar", pl: "без мн. ч.", ru: "Январь", exDe: "Im Januar ist es sehr kalt.", exRu: "В январе очень холодно." },
+      { art: "-", de: "jede", pl: "-", ru: "Каждый, каждая", exDe: "Jeder Tag ist wichtig.", exRu: "Каждый день важен." },
+      { art: "-", de: "jetzt", pl: "-", ru: "Сейчас, теперь", exDe: "Jetzt machen wir eine Pause.", exRu: "Сейчас мы сделаем перерыв." },
+      { art: "der", de: "Job", pl: "die Jobs", ru: "Работа, подработка", exDe: "Ich suche einen Job.", exRu: "Я ищу работу." },
+      { art: "der", de: "Juli", pl: "без мн. ч.", ru: "Июль", exDe: "Im Juli haben wir Urlaub.", exRu: "В июле у нас отпуск." },
+      { art: "der", de: "Junge", pl: "die Jungen", ru: "Мальчик", exDe: "Der Junge spielt im Garten.", exRu: "Мальчик играет в саду." },
+      { art: "der", de: "Juni", pl: "без мн. ч.", ru: "Июнь", exDe: "Die Schule endet im Juni.", exRu: "Школа заканчивается в июне." },
+      { art: "-", de: "jung", pl: "-", ru: "Молодой", exDe: "Sie ist noch sehr jung.", exRu: "Она еще очень молода." }
+            ],
+            K: [
+                { art: "der", de: "Kaffee", pl: "die Kaffees", ru: "Кофе", exDe: "Ich trinke morgens gerne Kaffee.", exRu: "Я люблю пить кофе по утрам." },
+      { art: "-", de: "kaputt", pl: "-", ru: "Сломанный, испорченный", exDe: "Das Auto ist kaputt.", exRu: "Машина сломана." },
+      { art: "die", de: "Karte", pl: "die Karten", ru: "Карта, билет, меню", exDe: "Bringen Sie mir bitte die Karte.", exRu: "Принесите мне, пожалуйста, меню." },
+      { art: "die", de: "Kartoffel", pl: "die Kartoffeln", ru: "Картофелина", exDe: "Wir essen gerne Kartoffeln.", exRu: "Мы любим есть картофель." },
+      { art: "der", de: "Käse", pl: "без мн. ч.", ru: "Сыр", exDe: "Möchtest du Käse auf das Brot?", exRu: "Хочешь сыр на хлеб?" },
+      { art: "die", de: "Kasse", pl: "die Kassen", ru: "Касса", exDe: "Bezahlen Sie bitte an der Kasse.", exRu: "Оплатите, пожалуйста, на кассе." },
+      { art: "verb", de: "kaufen", pl: "kauft, kaufte", ru: "Покупать", exDe: "Ich kaufe ein neues Buch.", exRu: "Я покупаю новую книгу." },
+      { art: "-", de: "kein", pl: "-", ru: "Никакой, не (отрицание существительных)", exDe: "Ich habe keine Zeit.", exRu: "У меня нет времени." },
+      { art: "der", de: "Kellner", pl: "die Kellner", ru: "Официант", exDe: "Der Kellner bringt das Essen.", exRu: "Официант приносит еду." },
+      { art: "verb", de: "kennen", pl: "kennt, kannte", ru: "Знать (быть знакомым)", exDe: "Kennst du diese Frau?", exRu: "Ты знаешь эту женщину?" },
+      { art: "verb", de: "kennenlernen", pl: "lernt kennen, lernte kennen", ru: "Знакомиться", exDe: "Nett, Sie kennenzulernen!", exRu: "Приятно с вами познакомиться!" },
+      { art: "das", de: "Kind", pl: "die Kinder", ru: "Ребенок", exDe: "Das Kind spielt im Garten.", exRu: "Ребенок играет в саду." },
+      { art: "der", de: "Kindergarten", pl: "die Kindergärten", ru: "Детский сад", exDe: "Mein Sohn geht in den Kindergarten.", exRu: "Мой сын ходит в детский сад." },
+      { art: "das", de: "Kino", pl: "die Kinos", ru: "Кинотеатр", exDe: "Wir gehen heute ins Kino.", exRu: "Мы идем сегодня в кино." },
+      { art: "der", de: "Kiosk", pl: "die Kioske", ru: "Киоск", exDe: "Ich kaufe eine Zeitung am Kiosk.", exRu: "Я покупаю газету в киоске." },
+      { art: "-", de: "klar", pl: "-", ru: "Ясный, понятный / Конечно", exDe: "Alles klar!", exRu: "Всё понятно!" },
+      { art: "die", de: "Klasse", pl: "die Klassen", ru: "Класс", exDe: "In der Klasse sind 20 Schüler.", exRu: "В классе 20 учеников." },
+      { art: "die", de: "Kleidung", pl: "без мн. ч.", ru: "Одежда", exDe: "Ich brauche neue Kleidung.", exRu: "Мне нужна новая одежда." },
+      { art: "-", de: "klein", pl: "-", ru: "Маленький", exDe: "Die Wohnung ist klein, aber schön.", exRu: "Квартира маленькая, но красивая." },
+      { art: "verb", de: "kochen", pl: "kocht, kochte", ru: "Готовить, варить", exDe: "Ich koche heute eine Suppe.", exRu: "Я сегодня варю суп." },
+      { art: "der", de: "Koffer", pl: "die Koffer", ru: "Чемодан", exDe: "Der Koffer ist sehr schwer.", exRu: "Чемодан очень тяжелый." },
+      { art: "der", de: "Kollege", pl: "die Kollegen", ru: "Коллега (мужчина)", exDe: "Mein Kollege hilft mir.", exRu: "Мой коллега помогает мне." },
+      { art: "die", de: "Kollegin", pl: "die Kolleginnen", ru: "Коллега (женщина)", exDe: "Frau Schmidt ist meine Kollegin.", exRu: "Госпожа Шмидт — моя коллега." },
+      { art: "verb", de: "kommen", pl: "kommt, kam", ru: "Приходить, приезжать", exDe: "Woher kommen Sie?", exRu: "Откуда вы?" },
+      { art: "verb", de: "können", pl: "kann, konnte", ru: "Мочь, уметь", exDe: "Ich kann Deutsch sprechen.", exRu: "Я могу говорить по-немецки." },
+      { art: "das", de: "Konto", pl: "die Konten", ru: "Счет (банковский)", exDe: "Ich möchte ein Konto eröffnen.", exRu: "Я хочу открыть счет." },
+      { art: "der", de: "Kopf", pl: "die Köpfe", ru: "Голова", exDe: "Mein Kopf tut weh.", exRu: "У меня болит голова." },
+      { art: "verb", de: "kosten", pl: "kostet, kostete", ru: "Стоить", exDe: "Wie viel kostet das?", exRu: "Сколько это стоит?" },
+      { art: "-", de: "krank", pl: "-", ru: "Больной", exDe: "Ich kann nicht kommen, ich bin krank.", exRu: "Я не могу прийти, я болен." },
+      { art: "das", de: "Krankenhaus", pl: "die Krankenhäuser", ru: "Больница", exDe: "Er liegt im Krankenhaus.", exRu: "Он лежит в больнице." },
+      { art: "die", de: "Krankenkasse", pl: "die Krankenkassen", ru: "Больничная касса (мед. страховка)", exDe: "Bei welcher Krankenkasse sind Sie?", exRu: "В какой больничной кассе вы застрахованы?" },
+      { art: "die", de: "Kreditkarte", pl: "die Kreditkarten", ru: "Кредитная карта", exDe: "Kann ich mit Kreditkarte bezahlen?", exRu: "Могу я оплатить кредитной картой?" },
+      { art: "der", de: "Kuchen", pl: "die Kuchen", ru: "Пирог, торт", exDe: "Der Kuchen schmeckt sehr gut.", exRu: "Пирог очень вкусный." },
+      { art: "der", de: "Kugelschreiber", pl: "die Kugelschreiber", ru: "Шариковая ручка", exDe: "Hast du einen Kugelschreiber für mich?", exRu: "У тебя есть для меня ручка?" },
+      { art: "der", de: "Kühlschrank", pl: "die Kühlschränke", ru: "Холодильник", exDe: "Die Milch steht im Kühlschrank.", exRu: "Молоко стоит в холодильнике." },
+      { art: "-", de: "kulturell", pl: "-", ru: "Культурный", exDe: "Ich interessiere mich für kulturelle Angebote.", exRu: "Меня интересуют культурные мероприятия." },
+      { art: "die", de: "Kultur", pl: "die Kulturen", ru: "Культура", exDe: "Deutschland hat eine reiche Kultur.", exRu: "У Германии богатая культура." },
+      { art: "der", de: "Kunde", pl: "die Kunden", ru: "Клиент, покупатель", exDe: "Der Kunde fragt nach dem Preis.", exRu: "Клиент спрашивает про цену." },
+      { art: "die", de: "Kundin", pl: "die Kundinnen", ru: "Клиентка, покупательница", exDe: "Die Kundin wartet an der Kasse.", exRu: "Покупательница ждет у кассы." },
+      { art: "der", de: "Kurs", pl: "die Kurse", ru: "Курс", exDe: "Der Deutschkurs beginnt um 9 Uhr.", exRu: "Курс немецкого начинается в 9 часов." },
+      { art: "-", de: "kurz", pl: "-", ru: "Короткий", exDe: "Ich habe nur eine kurze Frage.", exRu: "У меня только один короткий вопрос." }
+            ],
+            L: [
+                { art: "verb", de: "lachen", pl: "lacht, lachte", ru: "Смеяться", exDe: "Die Kinder lachen viel.", exRu: "Дети много смеются." },
+      { art: "der", de: "Laden", pl: "die Läden", ru: "Магазин, лавка", exDe: "Der Laden schließt um 19 Uhr.", exRu: "Магазин закрывается в 19:00." },
+      { art: "die", de: "Lampe", pl: "die Lampen", ru: "Лампа", exDe: "Die Lampe ist sehr hell.", exRu: "Лампа очень яркая." },
+      { art: "das", de: "Land", pl: "die Länder", ru: "Страна / Земля, деревня", exDe: "Deutschland ist ein schönes Land.", exRu: "Германия — красивая страна." },
+      { art: "-", de: "lang", pl: "-", ru: "Длинный, долгий", exDe: "Die Reise dauert lange.", exRu: "Поездка длится долго." },
+      { art: "-", de: "langsam", pl: "-", ru: "Медленный / Медленно", exDe: "Sprechen Sie bitte langsam!", exRu: "Говорите, пожалуйста, медленно!" },
+      { art: "verb", de: "laufen", pl: "läuft, lief", ru: "Бегать, идти пешком", exDe: "Ich laufe jeden Morgen im Park.", exRu: "Я бегаю каждое утро в парке." },
+      { art: "-", de: "laut", pl: "-", ru: "Громкий / Громко", exDe: "Die Musik ist zu laut.", exRu: "Музыка слишком громкая." },
+      { art: "verb", de: "leben", pl: "lebt, lebte", ru: "Жить", exDe: "Meine Großeltern leben noch.", exRu: "Мои дедушка и бабушка еще живы." },
+      { art: "das", de: "Leben", pl: "die Leben", ru: "Жизнь", exDe: "Das Leben hier ist ruhig.", exRu: "Жизнь здесь тихая." },
+      { art: "die", de: "Lebensmittel", pl: "только мн. ч.", ru: "Продукты питания", exDe: "Ich kaufe Lebensmittel im Supermarkt.", exRu: "Я покупаю продукты в супермаркете." },
+      { art: "-", de: "ledig", pl: "-", ru: "Холостой, не замужем", exDe: "Bist du verheiratet oder ledig?", exRu: "Ты женат или холост?" },
+      { art: "verb", de: "legen", pl: "legt, legte", ru: "Класть, положить", exDe: "Legen Sie das Buch auf den Tisch.", exRu: "Положите книгу на стол." },
+      { art: "der", de: "Lehrer", pl: "die Lehrer", ru: "Учитель", exDe: "Unser Lehrer ist sehr nett.", exRu: "Наш учитель очень приятный." },
+      { art: "die", de: "Lehrerin", pl: "die Lehrerinnen", ru: "Учительница", exDe: "Die Lehrerin erklärt die Aufgabe.", exRu: "Учительница объясняет задание." },
+      { art: "-", de: "leicht", pl: "-", ru: "Легкий, простой", exDe: "Die Aufgabe ist sehr leicht.", exRu: "Задание очень легкое." },
+      { art: "-", de: "leider", pl: "-", ru: "К сожалению", exDe: "Ich habe leider keine Zeit.", exRu: "У меня, к сожалению, нет времени." },
+      { art: "-", de: "leise", pl: "-", ru: "Тихий / Тихо", exDe: "Sei bitte leise!", exRu: "Будь, пожалуйста, тише!" },
+      { art: "verb", de: "lernen", pl: "lernt, lernte", ru: "Учить, учиться", exDe: "Ich lerne seit drei Monaten Deutsch.", exRu: "Я учу немецкий уже три месяца." },
+      { art: "verb", de: "lesen", pl: "liest, las", ru: "Читать", exDe: "Er liest ein interessantes Buch.", exRu: "Он читает интересную книгу." },
+      { art: "-", de: "letzt-", pl: "-", ru: "Последний, прошлый", exDe: "Letzten Sonntag war ich im Kino.", exRu: "В прошлое воскресенье я был в кино." },
+      { art: "die", de: "Leute", pl: "только мн. ч.", ru: "Люди", exDe: "Hier sind viele Leute.", exRu: "Здесь много людей." },
+      { art: "das", de: "Licht", pl: "die Lichter", ru: "Свет", exDe: "Mach bitte das Licht an!", exRu: "Включи, пожалуйста, свет!" },
+      { art: "verb", de: "lieben", pl: "liebt, liebte", ru: "Любить", exDe: "Ich liebe meine Familie.", exRu: "Я люблю свою семью." },
+      { art: "-", de: "lieblings-", pl: "-", ru: "Любимый (приставка)", exDe: "Mein Lieblingsessen ist Pizza.", exRu: "Моя любимая еда — пицца." },
+      { art: "verb", de: "liegen", pl: "liegt, lag", ru: "Лежать, находиться", exDe: "Das Buch liegt auf dem Tisch.", exRu: "Книга лежит на столе." },
+      { art: "die", de: "Limonade", pl: "die Limonaden", ru: "Лимонад", exDe: "Ich trinke eine kalte Limonade.", exRu: "Я пью холодный лимонад." },
+      { art: "-", de: "links", pl: "-", ru: "Слева, налево", exDe: "Biegen Sie nach links ab.", exRu: "Поверните налево." },
+      { art: "der", de: "Löffel", pl: "die Löffel", ru: "Ложка", exDe: "Ich brauche einen Löffel für die Suppe.", exRu: "Мне нужна ложка для супа." },
+      { art: "das", de: "Lokal", pl: "die Lokale", ru: "Ресторан, заведение", exDe: "In diesem Lokal kann man gut essen.", exRu: "В этом заведении можно хорошо поесть." },
+      { art: "die", de: "Lösung", pl: "die Lösungen", ru: "Решение", exDe: "Die Lösung ist richtig.", exRu: "Решение верное." },
+      { art: "die", de: "Lust", pl: "без мн. ч.", ru: "Желание, охота", exDe: "Hast du Lust auf einen Kaffee?", exRu: "Хочешь кофе?" }
+            ],
+            M: [
+                { art: "verb", de: "machen", pl: "macht, machte", ru: "Делать", exDe: "Was machst du heute?", exRu: "Что ты делаешь сегодня?" },
+      { art: "das", de: "Mädchen", pl: "die Mädchen", ru: "Девочка", exDe: "Das Mädchen spielt im Park.", exRu: "Девочка играет в парке." },
+      { art: "der", de: "Mai", pl: "без мн. ч.", ru: "Май", exDe: "Im Mai ist das Wetter schön.", exRu: "В мае погода хорошая." },
+      { art: "-", de: "man", pl: "-", ru: "Неопределенно-личное местоимение (они, человек)", exDe: "Hier darf man nicht rauchen.", exRu: "Здесь нельзя курить." },
+      { art: "der", de: "Mann", pl: "die Männer", ru: "Мужчина, муж", exDe: "Mein Mann arbeitet bei Siemens.", exRu: "Мой муж работает в Siemens." },
+      { art: "-", de: "männlich", pl: "-", ru: "Мужской (пол)", exDe: "Kreuzen Sie bitte „männlich“ an.", exRu: "Отметьте, пожалуйста, «мужской»." },
+      { art: "die", de: "Marmelade", pl: "die Marmeladen", ru: "Джем, варенье", exDe: "Ich esse Brot mit Marmelade.", exRu: "Я ем хлеб с джемом." },
+      { art: "der", de: "März", pl: "без мн. ч.", ru: "Март", exDe: "Der Frühling beginnt im März.", exRu: "Весна начинается в марте." },
+      { art: "-", de: "mehr", pl: "-", ru: "Больше", exDe: "Ich möchte mehr Kaffee.", exRu: "Я хочу больше кофе." },
+      { art: "die", de: "Meinung", pl: "die Meinungen", ru: "Мнение", exDe: "Meiner Meinung nach ist das gut.", exRu: "По моему мнению, это хорошо." },
+      { art: "-", de: "mein", pl: "-", ru: "Мой", exDe: "Das ist mein Koffer.", exRu: "Это мой чемодан." },
+      { art: "-", de: "meist-", pl: "-", ru: "Большинство, чаще всего", exDe: "Die meisten Menschen mögen Musik.", exRu: "Большинство людей любят музыку." },
+      { art: "der", de: "Mensch", pl: "die Menschen", ru: "Человек", exDe: "Hier leben viele Menschen.", exRu: "Здесь живет много людей." },
+      { art: "die", de: "Miete", pl: "die Mieten", ru: "Арендная плата", exDe: "Die Miete ist sehr hoch.", exRu: "Арендная плата очень высокая." },
+      { art: "verb", de: "mieten", pl: "mietet, mietete", ru: "Снимать, арендовать", exDe: "Wir mieten eine Wohnung.", exRu: "Мы арендуем квартиру." },
+      { art: "die", de: "Milch", pl: "без мн. ч.", ru: "Молоко", exDe: "Möchtest du Milch in den Kaffee?", exRu: "Хочешь молоко в кофе?" },
+      { art: "-", de: "mit", pl: "-", ru: "С, вместе с", exDe: "Ich fahre mit dem Bus.", exRu: "Я еду на автобусе." },
+      { art: "verb", de: "mitbringen", pl: "bringt mit, brachte mit", ru: "Приносить с собой", exDe: "Bring bitte etwas zu trinken mit!", exRu: "Принеси, пожалуйста, что-нибудь попить!" },
+      { art: "verb", de: "mitkommen", pl: "kommt mit, kam mit", ru: "Идти/ехать вместе", exDe: "Kommst du ins Kino mit?", exRu: "Ты пойдешь с нами в кино?" },
+      { art: "verb", de: "mitmachen", pl: "macht mit, machte mit", ru: "Участвовать, делать вместе", exDe: "Möchtest du auch mitmachen?", exRu: "Ты тоже хочешь поучаствовать?" },
+      { art: "verb", de: "mitnehmen", pl: "nimmt mit, nahm mit", ru: "Брать с собой", exDe: "Ich nehme den Regenschirm mit.", exRu: "Я беру с собой зонт." },
+      { art: "die", de: "Mitte", pl: "без мн. ч.", ru: "Середина", exDe: "Der Tisch steht in der Mitte.", exRu: "Стол стоит посередине." },
+      { art: "verb", de: "mögen", pl: "mag, mochte", ru: "Любить, нравиться", exDe: "Ich mag Schokolade.", exRu: "Мне нравится шоколад." },
+      { art: "-", de: "möglich", pl: "-", ru: "Возможный / Возможно", exDe: "Das ist leider nicht möglich.", exRu: "Это, к сожалению, невозможно." },
+      { art: "der", de: "Monat", pl: "die Monate", ru: "Месяц", exDe: "Ich bleibe einen Monat hier.", exRu: "Я останусь здесь на один месяц." },
+      { art: "der", de: "Morgen", pl: "die Morgen", ru: "Утро", exDe: "Guten Morgen!", exRu: "Доброе утро!" },
+      { art: "-", de: "morgen", pl: "-", ru: "Завтра", exDe: "Morgen habe ich frei.", exRu: "Завтра у меня выходной." },
+      { art: "-", de: "müde", pl: "-", ru: "Уставший", exDe: "Ich bin sehr müde.", exRu: "Я очень устал." },
+      { art: "der", de: "Mund", pl: "die Münder", ru: "Рот", exDe: "Öffnen Sie bitte den Mund!", exRu: "Откройте, пожалуйста, рот!" },
+      { art: "die", de: "Musik", pl: "без мн. ч.", ru: "Музыка", exDe: "Ich höre gerne Musik.", exRu: "Я люблю слушать музыку." },
+      { art: "verb", de: "müssen", pl: "muss, musste", ru: "Быть должным, быть обязанным", exDe: "Ich muss heute arbeiten.", exRu: "Я должен сегодня работать." },
+      { art: "die", de: "Mutter", pl: "die Mütter", ru: "Мать", exDe: "Meine Mutter kocht sehr gut.", exRu: "Моя мама очень хорошо готовит." }
+            ],
+            N: [
+                { art: "-", de: "nach", pl: "-", ru: "После / В (направление)", exDe: "Nach dem Kurs gehe ich nach Hause.", exRu: "После курса я иду домой." },
+      { art: "der", de: "Nachmittag", pl: "die Nachmittage", ru: "Вторая половина дня", exDe: "Am Nachmittag spiele ich Fußball.", exRu: "Днем я играю в футбол." },
+      { art: "die", de: "Nachricht", pl: "die Nachrichten", ru: "Новость, сообщение", exDe: "Ich habe deine Nachricht bekommen.", exRu: "Я получил твое сообщение." },
+      { art: "-", de: "nächste", pl: "-", ru: "Следующий", exDe: "Nächste Woche habe ich Urlaub.", exRu: "На следующей неделе у меня отпуск." },
+      { art: "die", de: "Nacht", pl: "die Nächte", ru: "Ночь", exDe: "Gute Nacht!", exRu: "Спокойной ночи!" },
+      { art: "der", de: "Name", pl: "die Namen", ru: "Имя, фамилия", exDe: "Wie ist Ihr Name?", exRu: "Как ваше имя?" },
+      { art: "verb", de: "nehmen", pl: "nimmt, nahm", ru: "Брать, брать себе", exDe: "Ich nehme ein Stück Kuchen.", exRu: "Я возьму кусочек пирога." },
+      { art: "-", de: "nein", pl: "-", ru: "Нет", exDe: "Nein, danke.", exRu: "Нет, спасибо." },
+      { art: "-", de: "neu", pl: "-", ru: "Новый", exDe: "Das ist mein neues Auto.", exRu: "Это моя новая машина." },
+      { art: "-", de: "nicht", pl: "-", ru: "Не (отрицание)", exDe: "Das weiß ich nicht.", exRu: "Я этого не знаю." },
+      { art: "-", de: "nichts", pl: "-", ru: "Ничего", exDe: "Ich sehe nichts.", exRu: "Я ничего не вижу." },
+      { art: "-", de: "nie", pl: "-", ru: "Никогда", exDe: "Er kommt nie zu spät.", exRu: "Он никогда не опаздывает." },
+      { art: "-", de: "noch", pl: "-", ru: "Ещё", exDe: "Möchten Sie noch etwas trinken?", exRu: "Хотите еще что-нибудь выпить?" },
+      { art: "-", de: "normal", pl: "-", ru: "Обычный, нормально", exDe: "Das ist ganz normal.", exRu: "Это вполне нормально." },
+      { art: "die", de: "Nummer", pl: "die Nummern", ru: "Номер", exDe: "Wie ist Ihre Telefonnummer?", exRu: "Какой у вас номер телефона?" },
+      { art: "-", de: "nur", pl: "-", ru: "Только, всего лишь", exDe: "Das kostet nur zwei Euro.", exRu: "Это стоит только два евро." }
+            ],
+            O: [
+               { art: "-", de: "oben", pl: "-", ru: "Вверху, наверху", exDe: "Die Wohnung ist oben.", exRu: "Квартира находится наверху." },
+      { art: "das", de: "Obst", pl: "без мн. ч.", ru: "Фрукты", exDe: "Ich esse täglich frisches Obst.", exRu: "Я ежедневно ем свежие фрукты." },
+      { art: "-", de: "oder", pl: "-", ru: "Или", exDe: "Möchtest du Tee oder Kaffee?", exRu: "Ты хочешь чай или кофе?" },
+      { art: "verb", de: "öffnen", pl: "öffnet, öffnete", ru: "Открывать", exDe: "Öffnen Sie bitte das Fenster!", exRu: "Откройте, пожалуйста, окно!" },
+      { art: "-", de: "oft", pl: "-", ru: "Часто", exDe: "Ich gehe oft im Park spazieren.", exRu: "Я часто гуляю в парке." },
+      { art: "-", de: "ohne", pl: "-", ru: "Без", exDe: "Ich trinke Kaffee ohne Zucker.", exRu: "Я пью кофе без сахара." },
+      { art: "das", de: "Ohr", pl: "die Ohren", ru: "Ухо", exDe: "Mein rechtes Ohr tut weh.", exRu: "У меня болит правое ухо." },
+      { art: "der", de: "Oktober", pl: "без мн. ч.", ru: "Октябрь", exDe: "Im Oktober beginnt das neue Semester.", exRu: "В октябре начинается новый семестр." },
+      { art: "der", de: "Opa", pl: "die Opas", ru: "Дедушка", exDe: "Mein Opa erzählt gute Geschichten.", exRu: "Мой дедушка рассказывает хорошие истории." },
+      { art: "die", de: "Oma", pl: "die Omas", ru: "Бабушка", exDe: "Meine Oma kocht sehr gut.", exRu: "Моя бабушка очень хорошо готовит." },
+      { art: "der", de: "Orangensaft", pl: "die Orangensäfte", ru: "Апельсиновый сок", exDe: "Ein Glas Orangensaft, bitte!", exRu: "Один стакан апельсинового сока, пожалуйста!" },
+      { art: "die", de: "Ordnung", pl: "без мн. ч.", ru: "Порядок", exDe: "Alles in Ordnung!", exRu: "Всё в порядке!" },
+      { art: "der", de: "Ort", pl: "die Orte", ru: "Место, населенный пункт", exDe: "Das ist ein schöner Ort zum Leben.", exRu: "Это прекрасное место для жизни." }
+            ],
+            P: [
+                { art: "die", de: "Papiere", pl: "только мн. ч.", ru: "Документы", exDe: "Haben Sie Ihre Papiere dabei?", exRu: "У вас с собой документы?" },
+      { art: "das", de: "Papier", pl: "die Papiere", ru: "Бумага", exDe: "Ich brauche ein Blatt Papier.", exRu: "Мне нужен лист бумаги." },
+      { art: "der", de: "Partner", pl: "die Partner", ru: "Партнер", exDe: "Das ist mein Partner.", exRu: "Это мой партнер." },
+      { art: "die", de: "Partnerin", pl: "die Partnerinnen", ru: "Партнерша", exDe: "Meine Partnerin kommt auch.", exRu: "Моя партнерша тоже придет." },
+      { art: "die", de: "Party", pl: "die Partys", ru: "Вечеринка", exDe: "Wir machen am Samstag eine Party.", exRu: "В субботу мы устраиваем вечеринку." },
+      { art: "der", de: "Pass", pl: "die Pässe", ru: "Паспорт", exDe: "Zeigen Sie bitte Ihren Pass!", exRu: "Покажите, пожалуйста, ваш паспорт!" },
+      { art: "verb", de: "passen", pl: "passt, passte", ru: "Подходить, быть по размеру", exDe: "Die Hose passt mir gut.", exRu: "Брюки мне хорошо подходят." },
+      { art: "die", de: "Pause", pl: "die Pausen", ru: "Перерыв, пауза", exDe: "Wir machen 15 Minuten Pause.", exRu: "Мы делаем перерыв на 15 минут." },
+      { art: "der", de: "Plan", pl: "die Pläne", ru: "План", exDe: "Hast du schon einen Plan für das Wochenende?", exRu: "У тебя уже есть план на выходные?" },
+      { art: "der", de: "Platz", pl: "die Plätze", ru: "Место, площадь", exDe: "Ist dieser Platz noch frei?", exRu: "Это место еще свободно?" },
+      { art: "die", de: "Post", pl: "без мн. ч.", ru: "Почта", exDe: "Ich muss zur Post gehen.", exRu: "Мне нужно сходить на почту." },
+      { art: "die", de: "Postleitzahl", pl: "die Postleitzahlen", ru: "Почтовый индекс", exDe: "Wie ist Ihre Postleitzahl?", exRu: "Какой у вас почтовый индекс?" },
+      { art: "-", de: "praktisch", pl: "-", ru: "Практичный / Практически", exDe: "Das ist sehr praktisch.", exRu: "Это очень практично." },
+      { art: "die", de: "Praxis", pl: "die Praxen", ru: "Врачебный кабинет, практика", exDe: "Die Praxis ist am Mittwoch geschlossen.", exRu: "Кабинет врача в среду закрыт." },
+      { art: "der", de: "Preis", pl: "die Preise", ru: "Цена", exDe: "Der Preis ist günstig.", exRu: "Цена выгодная." },
+      { art: "das", de: "Problem", pl: "die Probleme", ru: "Проблема", exDe: "Kein Problem!", exRu: "Без проблем!" },
+      { art: "der", de: "Prospekt", pl: "die Prospekte", ru: "Проспект, брошюра", exDe: "Ich nehme einen Prospekt mit.", exRu: "Я возьму с собой брошюру." }
+            ],
+            Q: [
+                { art: "die", de: "Qualität", pl: "die Qualitäten", ru: "Качество", exDe: "Die Qualität dieser Schuhe ist hervorragend.", exRu: "Качество этой обуви великолепное." }
+            ],
+            R: [
+                { art: "das", de: "Radio", pl: "die Radios", ru: "Радио", exDe: "Ich höre morgens gern Radio.", exRu: "По утрам я люблю слушать радио." },
+      { art: "verb", de: "rauchen", pl: "raucht, rauchte", ru: "Курить", exDe: "Hier darf man nicht rauchen.", exRu: "Здесь нельзя курить." },
+      { art: "der", de: "Raum", pl: "die Räume", ru: "Помещение, комната", exDe: "Der Raum ist sehr groß.", exRu: "Помещение очень большое." },
+      { art: "verb", de: "rechnen", pl: "rechnet, rechnete", ru: "Считать, вычислять", exDe: "Er kann schnell rechnen.", exRu: "Он умеет быстро считать." },
+      { art: "die", de: "Rechnung", pl: "die Rechnungen", ru: "Счет (к оплате)", exDe: "Die Rechnung, bitte!", exRu: "Счет, пожалуйста!" },
+      { art: "-", de: "rechts", pl: "-", ru: "Справа, направо", exDe: "Biegen Sie nach rechts ab.", exRu: "Поверните направо." },
+      { art: "verb", de: "regnen", pl: "regnet, regnete", ru: "Идти (о дожде)", exDe: "Heute regnet es den ganzen Tag.", exRu: "Сегодня весь день идет дождь." },
+      { art: "der", de: "Regen", pl: "без мн. ч.", ru: "Дождь", exDe: "Bei Regen bleibe ich zu Hause.", exRu: "Во время дождя я остаюсь дома." },
+      { art: "der", de: "Reis", pl: "без мн. ч.", ru: "Рис", exDe: "Ich esse gern Fisch mit Reis.", exRu: "Я люблю есть рыбу с рисом." },
+      { art: "verb", de: "reisen", pl: "reist, reiste", ru: "Путешествовать", exDe: "Ich reise gern nach Spanien.", exRu: "Я люблю ездить в Испанию." },
+      { art: "die", de: "Reise", pl: "die Reisen", ru: "Путешествие, поездка", exDe: "Gute Reise!", exRu: "Счастливого пути!" },
+      { art: "das", de: "Reisebüro", pl: "die Reisebüros", ru: "Турагентство", exDe: "Wir buchen den Urlaub im Reisebüro.", exRu: "Мы бронируем отпуск в турагентстве." },
+      { art: "der", de: "Reiseführer", pl: "die Reiseführer", ru: "Путеводитель / Гид", exDe: "Ich kaufe einen Reiseführer für Berlin.", exRu: "Я покупаю путеводитель по Берлину." },
+      { art: "verb", de: "reparieren", pl: "repariert, reparierte", ru: "Ремонтировать, чинить", exDe: "Er kann das Fahrrad reparieren.", exRu: "Он может починить велосипед." },
+      { art: "die", de: "Reparatur", pl: "die Reparaturen", ru: "Ремонт", exDe: "Die Reparatur ist sehr teuer.", exRu: "Ремонт очень дорогой." },
+      { art: "das", de: "Restaurant", pl: "die Restaurants", ru: "Ресторан", exDe: "Wir essen heute im Restaurant.", exRu: "Мы сегодня едим в ресторане." },
+      { art: "das", de: "Rezept", pl: "die Rezepte", ru: "Рецепт (врачебный или кулинарный)", exDe: "Der Arzt gibt mir ein Rezept.", exRu: "Врач дает мне рецепт." },
+      { art: "verb", de: "riechen", pl: "riecht, roch", ru: "Пахнуть, нюхать", exDe: "Das Essen riecht gut.", exRu: "Еда хорошо пахнет." },
+      { art: "-", de: "richtig", pl: "-", ru: "Правильный, верный", exDe: "Das ist richtig.", exRu: "Это правильно." },
+      { art: "-", de: "ruhig", pl: "-", ru: "Спокойный, тихий", exDe: "Die Straße ist sehr ruhig.", exRu: "Улица очень тихая." }
+            ],
+            S: [
+               { art: "verb", de: "sagen", pl: "sagt, sagte", ru: "Сказать, говорить", exDe: "Was sagen Sie dazu?", exRu: "Что вы скажете на это?" },
+      { art: "der", de: "Saft", pl: "die Säfte", ru: "Сок", exDe: "Möchtest du einen Apfelsaft?", exRu: "Хочешь яблочный сок?" },
+      { art: "der", de: "Salat", pl: "die Salate", ru: "Салат", exDe: "Ich esse gerne frischen Salat.", exRu: "Я люблю есть свежий салат." },
+      { art: "das", de: "Salz", pl: "без мн. ч.", ru: "Соль", exDe: "Gibst du mir bitte das Salz?", exRu: "Дашь мне, пожалуйста, соль?" },
+      { art: "der", de: "Samstag", pl: "die Samstage", ru: "Суббота", exDe: "Am Samstag gehe ich einkaufen.", exRu: "В субботу я иду за покупками." },
+      { art: "die", de: "S-Bahn", pl: "die S-Bahnen", ru: "Городская электричка", exDe: "Wir nehmen die S-Bahn.", exRu: "Мы поедем на городской электричке." },
+      { art: "der", de: "Schalter", pl: "die Schalter", ru: "Окошко, касса, выключатель", exDe: "Der Schalter ist geschlossen.", exRu: "Окошко закрыто." },
+      { art: "verb", de: "scheinen", pl: "scheint, schien", ru: "Светить, казаться", exDe: "Die Sonne scheint.", exRu: "Светит солнце." },
+      { art: "verb", de: "schenken", pl: "schenkt, schenkte", ru: "Дарить", exDe: "Ich schenke ihr eine Blume.", exRu: "Я дарю ей цветок." },
+      { art: "verb", de: "schicken", pl: "schickt, schickte", ru: "Посылать, отправлять", exDe: "Ich schicke dir eine E-Mail.", exRu: "Я отправлю тебе электронное письмо." },
+      { art: "das", de: "Schiff", pl: "die Schiffe", ru: "Корабль", exDe: "Das Schiff fährt nach Hamburg.", exRu: "Корабль плывет в Гамбург." },
+      { art: "das", de: "Schild", pl: "die Schilder", ru: "Табличка, вывеска", exDe: "Lesen Sie das Schild!", exRu: "Прочитайте табличку!" },
+      { art: "verb", de: "schlafen", pl: "schläft, schlief", ru: "Спать", exDe: "Gute Nacht, schlaf gut!", exRu: "Спокойной ночи, спи хорошо!" },
+      { art: "das", de: "Schlafzimmer", pl: "die Schlafzimmer", ru: "Спальня", exDe: "Das Schlafzimmer ist groß.", exRu: "Спальня большая." },
+      { art: "-", de: "schlecht", pl: "-", ru: "Плохой / Плохо", exDe: "Mir ist schlecht.", exRu: "Мне плохо." },
+      { art: "verb", de: "schließen", pl: "schließt, schloss", ru: "Закрывать", exDe: "Bitte schließen Sie die Tür!", exRu: "Пожалуйста, закройте дверь!" },
+      { art: "der", de: "Schluss", pl: "без мн. ч.", ru: "Конец, завершение", exDe: "Ich mache jetzt Schluss.", exRu: "Я сейчас заканчиваю." },
+      { art: "der", de: "Schlüssel", pl: "die Schlüssel", ru: "Ключ", exDe: "Ich habe meinen Schlüssel verloren.", exRu: "Я потерял свой ключ." },
+      { art: "verb", de: "schmecken", pl: "schmeckt, schmeckte", ru: "Быть вкусным, пробовать на вкус", exDe: "Das Essen schmeckt sehr gut.", exRu: "Еда очень вкусная." },
+      { art: "der", de: "Schmerz", pl: "die Schmerzen", ru: "Боль", exDe: "Ich habe Bauchschmerzen.", exRu: "У меня болит живот." },
+      { art: "-", de: "schnell", pl: "-", ru: "Быстрый / Быстро", exDe: "Fahr nicht so schnell!", exRu: "Не едь так быстро!" },
+      { art: "-", de: "schön", pl: "-", ru: "Красивый, прекрасный", exDe: "Schönen Tag noch!", exRu: "Хорошего дня!" },
+      { art: "der", de: "Schrank", pl: "die Schränke", ru: "Шкаф", exDe: "Die Kleidung hängt im Schrank.", exRu: "Одежда висит в шкафу." },
+      { art: "verb", de: "schreiben", pl: "schreibt, schrieb", ru: "Писать", exDe: "Er schreibt einen Brief.", exRu: "Он пишет письмо." },
+      { art: "der", de: "Schuh", pl: "die Schuhe", ru: "Ботинок, обувь", exDe: "Zieh die Schuhe aus!", exRu: "Сними обувь!" },
+      { art: "die", de: "Schule", pl: "die Schulen", ru: "Школа", exDe: "Die Kinder gehen in die Schule.", exRu: "Дети идут в школу." },
+      { art: "der", de: "Schüler", pl: "die Schüler", ru: "Ученик", exDe: "Er ist ein guter Schüler.", exRu: "Он хороший ученик." },
+      { art: "-", de: "schwer", pl: "-", ru: "Тяжелый, сложный", exDe: "Die Aufgabe ist nicht schwer.", exRu: "Задание не сложное." },
+      { art: "die", de: "Schwester", pl: "die Schwestern", ru: "Сестра", exDe: "Meine Schwester wohnt in Wien.", exRu: "Моя сестра живет в Вене." },
+      { art: "verb", de: "schwimmen", pl: "schwimmt, schwamm", ru: "Плавать", exDe: "Wir schwimmen im See.", exRu: "Мы плаваем в озере." },
+      { art: "das", de: "Schwimmbad", pl: "die Schwimmbäder", ru: "Бассейн", exDe: "Gehen wir ins Schwimmbad?", exRu: "Пойдем в бассейн?" },
+      { art: "verb", de: "sehen", pl: "sieht, sah", ru: "Смотреть, видеть", exDe: "Siehst du den Vogel?", exRu: "Видишь птицу?" },
+      { art: "die", de: "Sehenswürdigkeit", pl: "die Sehenswürdigkeiten", ru: "Достопримечательность", exDe: "Wir besichtigen Sehenswürdigkeiten.", exRu: "Мы осматриваем достопримечательности." },
+      { art: "-", de: "sehr", pl: "-", ru: "Очень", exDe: "Vielen Dank, das ist sehr nett!", exRu: "Большое спасибо, это очень мило!" },
+      { art: "verb", de: "sein", pl: "ist, war", ru: "Быть, являться", exDe: "Ich bin Anton.", exRu: "Я — Антон." },
+      { art: "-", de: "seit", pl: "-", ru: "С, начиная с (о времени)", exDe: "Ich wohne seit zwei Jahren hier.", exRu: "Я живу здесь два года." },
+      { art: "die", de: "Seite", pl: "die Seiten", ru: "Страница, сторона", exDe: "Öffnen Sie das Buch auf Seite 10.", exRu: "Откройте книгу на странице 10." },
+      { art: "der", de: "September", pl: "без мн. ч.", ru: "Сентябрь", exDe: "Im September beginnt die Schule.", exRu: "В сентябре начинается школа." },
+      { art: "-", de: "sich", pl: "-", ru: "Себя, себе (возвратное местоимение)", exDe: "Er wäscht sich.", exRu: "Он умывается." },
+      { art: "-", de: "sicher", pl: "-", ru: "Уверенный, безопасный", exDe: "Bist du sicher?", exRu: "Ты уверен?" },
+      { art: "verb", de: "singen", pl: "singt, sang", ru: "Петь", exDe: "Sie singt sehr gut.", exRu: "Она очень хорошо поет." },
+      { art: "verb", de: "sitzen", pl: "sitzt, saß", ru: "Сидеть", exDe: "Wir sitzen im Garten.", exRu: "Мы сидим в саду." },
+      { art: "-", de: "so", pl: "-", ru: "Так, таким образом", exDe: "Mach das nicht so!", exRu: "Не делай так!" },
+      { art: "-", de: "sofort", pl: "-", ru: "Тотчас, сразу же", exDe: "Ich komme sofort.", exRu: "Я сейчас же приду." },
+      { art: "der", de: "Sohn", pl: "die Söhne", ru: "Сын", exDe: "Mein Sohn ist zehn Jahre alt.", exRu: "Моему сыну десять лет." },
+      { art: "verb", de: "sollen", pl: "soll, sollte", ru: "Быть должным (следовать совету)", exDe: "Soll ich das Fenster öffnen?", exRu: "Мне открыть окно?" },
+      { art: "die", de: "Sonne", pl: "die Sonnen", ru: "Солнце", exDe: "Die Sonne scheint heute.", exRu: "Сегодня светит солнце." },
+      { art: "der", de: "Sonntag", pl: "die Sonntage", ru: "Воскресенье", exDe: "Am Sonntag schlafe ich lange.", exRu: "В воскресенье я долго сплю." },
+      { art: "-", de: "spät", pl: "-", ru: "Поздно", exDe: "Wie spät ist es?", exRu: "Который час?" },
+      { art: "-", de: "später", pl: "-", ru: "Позже", exDe: "Bis später!", exRu: "До скорого! / До встречи позже!" },
+      { art: "der", de: "Spaziergang", pl: "die Spaziergänge", ru: "Прогулка", exDe: "Wir machen einen Spaziergang.", exRu: "Мы идем на прогулку." },
+      { art: "die", de: "Speisekarte", pl: "die Speisekarten", ru: "Меню", exDe: "Die Speisekarte, bitte!", exRu: "Меню, пожалуйста!" },
+      { art: "verb", de: "spielen", pl: "spielt, spielte", ru: "Играть", exDe: "Die Kinder spielen im Garten.", exRu: "Дети играют в саду." },
+      { art: "der", de: "Sport", pl: "без мн. ч.", ru: "Спорт", exDe: "Ich mache gerne Sport.", exRu: "Я люблю заниматься спортом." },
+      { art: "die", de: "Sprache", pl: "die Sprachen", ru: "Язык", exDe: "Welche Sprachen sprechen Sie?", exRu: "На каких языках вы говорите?" },
+      { art: "verb", de: "sprechen", pl: "spricht, sprach", ru: "Говорить", exDe: "Ich spreche ein bisschen Deutsch.", exRu: "Я немного говорю по-немецки." },
+      { art: "die", de: "Stadt", pl: "die Städte", ru: "Город", exDe: "Berlin ist eine große Stadt.", exRu: "Берлин — большой город." },
+      { art: "verb", de: "stehen", pl: "steht, stand", ru: "Стоять", exDe: "Das Auto steht vor dem Haus.", exRu: "Машина стоит перед домом." },
+      { art: "verb", de: "stellen", pl: "stellt, stellte", ru: "Ставить", exDe: "Stellen Sie die Flasche auf den Tisch.", exRu: "Поставьте бутылку на стол." },
+      { art: "die", de: "Straße", pl: "die Straßen", ru: "Улица", exDe: "Die Straße ist sehr lang.", exRu: "Улица очень длинная." },
+      { art: "die", de: "Straßenbahn", pl: "die Straßenbahnen", ru: "Трамвай", exDe: "Wir fahren mit der Straßenbahn.", exRu: "Мы едем на трамвае." },
+      { art: "verb", de: "studieren", pl: "studiert, studierte", ru: "Учиться в вузе", exDe: "Er studiert Medizin in München.", exRu: "Он изучает медицину в Мюнхене." },
+      { art: "das", de: "Studium", pl: "die Studien", ru: "Учеба в вузе", exDe: "Das Studium beginnt im Oktober.", exRu: "Учеба начинается в октябре." },
+      { art: "der", de: "Student", pl: "die Studenten", ru: "Студент", exDe: "Er ist Student.", exRu: "Он студент." },
+      { art: "die", de: "Studentin", pl: "die Studentinnen", ru: "Студентка", exDe: "Sie ist Studentin.", exRu: "Она студентка." },
+      { art: "die", de: "Stunde", pl: "die Stunden", ru: "Час (продолжительность)", exDe: "Der Kurs dauert eine Stunde.", exRu: "Курс длится один час." },
+      { art: "verb", de: "suchen", pl: "sucht, suchte", ru: "Искать", exDe: "Ich suche meinen Schlüssel.", exRu: "Я ищу свой ключ." },
+      { art: "der", de: "Supermarkt", pl: "die Supermärkte", ru: "Супермаркет", exDe: "Ich kaufe im Supermarkt ein.", exRu: "Я делаю покупки в супермаркете." },
+      { art: "die", de: "Suppe", pl: "die Suppen", ru: "Суп", exDe: "Die Suppe schmeckt gut.", exRu: "Суп вкусный." }
+            ],
+            T:[ 
+                { art: "der", de: "Tag", pl: "die Tage", ru: "День", exDe: "Guten Tag!", exRu: "Добрый день!" },
+      { art: "die", de: "Tasche", pl: "die Taschen", ru: "Сумка, карман", exDe: "Meine Tasche ist schwer.", exRu: "Моя сумка тяжелая." },
+      { art: "die", de: "Tasse", pl: "die Tassen", ru: "Чашка", exDe: "Eine Tasse Kaffee, bitte.", exRu: "Чашку кофе, пожалуйста." },
+      { art: "der", de: "Tee", pl: "die Tees", ru: "Чай", exDe: "Ich trinke morgens gerne Tee.", exRu: "По утрам я люблю пить чай." },
+      { art: "der", de: "Teil", pl: "die Teile", ru: "Часть", exDe: "Das ist der erste Teil.", exRu: "Это первая часть." },
+      { art: "verb", de: "telefonieren", pl: "telefoniert, telefonierte", ru: "Разговаривать по телефону", exDe: "Er telefoniert mit seiner Mutter.", exRu: "Он говорит по телефону со своей мамой." },
+      { art: "das", de: "Telefon", pl: "die Telefone", ru: "Телефон", exDe: "Das Telefon klingelt.", exRu: "Телефон звонит." },
+      { art: "der", de: "Termin", pl: "die Termine", ru: "Встреча, прием (у врача и т.д.)", exDe: "Ich habe einen Termin beim Arzt.", exRu: "У меня запись к врачу." },
+      { art: "-", de: "teuer", pl: "-", ru: "Дорогой", exDe: "Das Auto ist sehr teuer.", exRu: "Машина очень дорогая." },
+      { art: "der", de: "Text", pl: "die Texte", ru: "Текст", exDe: "Lesen Sie bitte den Text.", exRu: "Прочитайте, пожалуйста, текст." },
+      { art: "das", de: "Thema", pl: "die Themen", ru: "Тема", exDe: "Das ist ein interessantes Thema.", exRu: "Это интересная тема." },
+      { art: "das", de: "Ticket", pl: "die Tickets", ru: "Билет", exDe: "Hast du das Ticket gekauft?", exRu: "Ты купил билет?" },
+      { art: "der", de: "Tisch", pl: "die Tische", ru: "Стол", exDe: "Der Tisch steht im Zimmer.", exRu: "Стол стоит в комнате." },
+      { art: "die", de: "Tochter", pl: "die Töchter", ru: "Дочь", exDe: "Meine Tochter geht in die Schule.", exRu: "Моя дочь ходит в школу." },
+      { art: "die", de: "Toilette", pl: "die Toiletten", ru: "Туалет", exDe: "Wo ist die Toilette?", exRu: "Где туалет?" },
+      { art: "die", de: "Tomate", pl: "die Tomaten", ru: "Помидор", exDe: "Der Salat hat Tomaten.", exRu: "В салате есть помидоры." },
+      { art: "-", de: "tot", pl: "-", ru: "Мертвый", exDe: "Sein Hund ist tot.", exRu: "Его собака умерла." },
+      { art: "verb", de: "treffen", pl: "trifft, traf", ru: "Встречать, встречаться", exDe: "Ich treffe heute meine Freunde.", exRu: "Сегодня я встречаюсь с друзьями." },
+      { art: "die", de: "Treppe", pl: "die Treppen", ru: "Лестница", exDe: "Wir gehen die Treppe hoch.", exRu: "Мы поднимаемся по лестнице." },
+      { art: "verb", de: "trinken", pl: "trinkt, trank", ru: "Пить", exDe: "Was möchten Sie trinken?", exRu: "Что вы хотите выпить?" },
+      { art: "-", de: "tschüss", pl: "-", ru: "Пока!", exDe: "Tschüss, bis morgen!", exRu: "Пока, до завтра!" },
+      { art: "die", de: "Tür", pl: "die Türen", ru: "Дверь", exDe: "Schließen Sie bitte die Tür.", exRu: "Закройте, пожалуйста, дверь." }
+    ],
+       U:[
+      { art: "-", de: "über", pl: "-", ru: "Над, о, через", exDe: "Das Bild hängt über dem Tisch.", exRu: "Картина висит над столом." },
+      { art: "-", de: "überall", pl: "-", ru: "Везде, повсюду", exDe: "Ich habe überall gesucht.", exRu: "Я искал везде." },
+      { art: "verb", de: "übernachten", pl: "übernachtet, übernachtete", ru: "Ночевать", exDe: "Wir übernachten im Hotel.", exRu: "Мы ночуем в отеле." },
+      { art: "die", de: "U-Bahn", pl: "die U-Bahnen", ru: "Метро", exDe: "Wir fahren mit der U-Bahn.", exRu: "Мы едем на метро." },
+      { art: "die", de: "Uhr", pl: "die Uhren", ru: "Часы, час (время)", exDe: "Es ist 8 Uhr.", exRu: "Сейчас 8 часов." },
+      { art: "-", de: "um", pl: "-", ru: "Вокруг / В (о времени)", exDe: "Der Zug kommt um 10 Uhr an.", exRu: "Поезд прибывает в 10 часов." },
+      { art: "verb", de: "umsteigen", pl: "steigt um, stieg um", ru: "Пересаживаться", exDe: "In Berlin müssen wir umsteigen.", exRu: "В Берлине нам нужно пересесть." },
+      { art: "-", de: "und", pl: "-", ru: "И, а", exDe: "Anton und Lisa lernen Deutsch.", exRu: "Антон и Лиза учат немецкий." },
+      { art: "-", de: "unser", pl: "-", ru: "Наш", exDe: "Das ist unser Haus.", exRu: "Это наш дом." },
+      { art: "-", de: "unten", pl: "-", ru: "Внизу", exDe: "Die Garage ist unten.", exRu: "Гараж находится внизу." },
+      { art: "-", de: "unter", pl: "-", ru: "Под", exDe: "Der Hund liegt unter dem Tisch.", exRu: "Собака лежит под столом." },
+      { art: "der", de: "Unterricht", pl: "без мн. ч.", ru: "Занятие, урок", exDe: "Der Unterricht beginnt um 9 Uhr.", exRu: "Урок начинается в 9 часов." },
+      { art: "verb", de: "unterschreiben", pl: "unterschreibt, unterschrieb", ru: "Подписывать", exDe: "Unterschreiben Sie bitte hier.", exRu: "Подпишите, пожалуйста, здесь." },
+      { art: "die", de: "Unterschrift", pl: "die Unterschriften", ru: "Подпись", exDe: "Hier fehlt Ihre Unterschrift.", exRu: "Здесь не хватает вашей подписи." },
+      { art: "der", de: "Urlaub", pl: "die Urlaube", ru: "Отпуск", exDe: "Im August habe ich Urlaub.", exRu: "В августе у меня отпуск." }
+    ],
+    V:[
+      { art: "der", de: "Vater", pl: "die Väter", ru: "Отец", exDe: "Mein Vater arbeitet viel.", exRu: "Мой отец много работает." },
+      { art: "-", de: "verboten", pl: "-", ru: "Запрещено", exDe: "Rauchen ist verboten.", exRu: "Курение запрещено." },
+      { art: "verb", de: "verdienen", pl: "verdient, verdiente", ru: "Зарабатывать", exDe: "Er verdient gut.", exRu: "Он хорошо зарабатывает." },
+      { art: "verb", de: "vereinbaren", pl: "vereinbart, vereinbarte", ru: "Согласовывать, договариваться", exDe: "Wir müssen einen Termin vereinbaren.", exRu: "Нам нужно договориться о встрече." },
+      { art: "verb", de: "vergessen", pl: "vergisst, vergaß", ru: "Забывать", exDe: "Ich habe meinen Schlüssel vergessen.", exRu: "Я забыл свой ключ." },
+      { art: "verb", de: "vergleichen", pl: "vergleicht, verglich", ru: "Сравнивать", exDe: "Vergleichen Sie die Preise.", exRu: "Сравните цены." },
+      { art: "-", de: "verheiratet", pl: "-", ru: "Женат / Замужем", exDe: "Ich bin verheiratet.", exRu: "Я женат / замужем." },
+      { art: "verb", de: "verkaufen", pl: "verkauft, verkaufte", ru: "Продавать", exDe: "Er verkauft sein Auto.", exRu: "Он продает свою машину." },
+      { art: "der", de: "Verkäufer", pl: "die Verkäufer", ru: "Продавец", exDe: "Der Verkäufer ist sehr nett.", exRu: "Продавец очень приятный." },
+      { art: "die", de: "Verkäuferin", pl: "die Verkäuferinnen", ru: "Продавщица", exDe: "Die Verkäuferin hilft mir.", exRu: "Продавщица помогает мне." },
+      { art: "verb", de: "verstehen", pl: "versteht, verstand", ru: "Понимать", exDe: "Ich verstehe das nicht.", exRu: "Я этого не понимаю." },
+      { art: "-", de: "viel", pl: "-", ru: "Много", exDe: "Ich habe viel Arbeit.", exRu: "У меня много работы." },
+      { art: "-", de: "vielleicht", pl: "-", ru: "Возможно, может быть", exDe: "Vielleicht komme ich später.", exRu: "Может быть, я приду позже." },
+      { art: "-", de: "von", pl: "-", ru: "От, из, о", exDe: "Das ist das Auto von Anton.", exRu: "Это машина Антона." },
+      { art: "-", de: "vor", pl: "-", ru: "Перед, до", exDe: "Das Auto steht vor der Tür.", exRu: "Машина стоит перед дверью." },
+      { art: "der", de: "Vorname", pl: "die Vornamen", ru: "Имя (личное)", exDe: "Mein Vorname ist Anton.", exRu: "Мое имя — Антон." },
+      { art: "-", de: "vorsichtig", pl: "-", ru: "Осторожный", exDe: "Sei vorsichtig!", exRu: "Будь осторожен!" }
+    ],
+       W:[
+      { art: "verb", de: "warten", pl: "wartet, wartete", ru: "Ждать", exDe: "Ich warte auf den Bus.", exRu: "Я жду автобус." },
+      { art: "-", de: "warum", pl: "-", ru: "Почему", exDe: "Warum kommst du nicht?", exRu: "Почему ты не приходишь?" },
+      { art: "-", de: "was", pl: "-", ru: "Что", exDe: "Was machst du heute?", exRu: "Что ты делаешь сегодня?" },
+      { art: "das", de: "Wasser", pl: "без мн. ч.", ru: "Вода", exDe: "Ein Glas Wasser, bitte.", exRu: "Стакан воды, пожалуйста." },
+      { art: "verb", de: "weh tun", pl: "tut weh, tat weh", ru: "Болеть, причинять боль", exDe: "Mein Kopf tut weh.", exRu: "У меня болит голова." },
+      { art: "-", de: "weiblich", pl: "-", ru: "Женский (пол)", exDe: "Kreuzen Sie bitte „weiblich“ an.", exRu: "Отметьте, пожалуйста, «женский»." },
+      { art: "der", de: "Wein", pl: "die Weine", ru: "Вино", exDe: "Ich trinke gerne Rotwein.", exRu: "Я люблю красное вино." },
+      { art: "-", de: "weit", pl: "-", ru: "Далекий, далеко", exDe: "Wie weit ist es zum Bahnhof?", exRu: "Как далеко до вокзала?" },
+      { art: "-", de: "welcher", pl: "-", ru: "Какой, который", exDe: "Welcher Tag ist heute?", exRu: "Какой сегодня день?" },
+      { art: "die", de: "Welt", pl: "die Welten", ru: "Мир", exDe: "Er reist um die Welt.", exRu: "Он путешествует по миру." },
+      { art: "-", de: "wenig", pl: "-", ru: "Мало", exDe: "Ich habe wenig Zeit.", exRu: "У меня мало времени." },
+      { art: "-", de: "wer", pl: "-", ru: "Кто", exDe: "Wer ist das?", exRu: "Кто это?" },
+      { art: "verb", de: "werden", pl: "wird, wurde", ru: "Становиться", exDe: "Es wird kalt.", exRu: "Становится холодно." },
+      { art: "das", de: "Wetter", pl: "без мн. ч.", ru: "Погода", exDe: "Das Wetter ist heute schön.", exRu: "Сегодня хорошая погода." },
+      { art: "-", de: "wichtig", pl: "-", ru: "Важный", exDe: "Das ist sehr wichtig.", exRu: "Это очень важно." },
+      { art: "-", de: "wie", pl: "-", ru: "Как", exDe: "Wie heißen Sie?", exRu: "Как вас зовут?" },
+      { art: "verb", de: "wiederholen", pl: "wiederholt, wiederholte", ru: "Повторять", exDe: "Können Sie das bitte wiederholen?", exRu: "Можете, пожалуйста, повторить?" },
+      { art: "-", de: "willkommen", pl: "-", ru: "Добро пожаловать", exDe: "Herzlich willkommen!", exRu: "Добро пожаловать!" },
+      { art: "verb", de: "wissen", pl: "weiß, wusste", ru: "Знать (факт)", exDe: "Ich weiß das nicht.", exRu: "Я этого не знаю." },
+      { art: "-", de: "wo", pl: "-", ru: "Где", exDe: "Wo wohnst du?", exRu: "Где ты живешь?" },
+      { art: "-", de: "woher", pl: "-", ru: "Откуда", exDe: "Woher kommen Sie?", exRu: "Откуда вы?" },
+      { art: "-", de: "wohin", pl: "-", ru: "Куда", exDe: "Wohin fährst du?", exRu: "Куда ты едешь?" },
+      { art: "die", de: "Wohnung", pl: "die Wohnungen", ru: "Квартира", exDe: "Die Wohnung ist groß.", exRu: "Квартира большая." },
+      { art: "verb", de: "wohnen", pl: "wohnt, wohnte", ru: "Проживать", exDe: "Ich wohne in Berlin.", exRu: "Я живу в Берлине." },
+      { art: "verb", de: "wollen", pl: "will, wollte", ru: "Хотеть", exDe: "Ich will Deutsch lernen.", exRu: "Я хочу учить немецкий." },
+      { art: "das", de: "Wort", pl: "die Wörter", ru: "Слово", exDe: "Ich kenne dieses Wort nicht.", exRu: "Я не знаю этого слова." },
+      { art: "verb", de: "wünschen", pl: "wünscht, wünschte", ru: "Желать", exDe: "Ich wünsche dir alles Gute!", exRu: "Желаю тебе всего хорошего!" }
+    ],
+    Z:[
+      { art: "die", de: "Zahl", pl: "die Zahlen", ru: "Число, цифра", exDe: "Können Sie die Zahl wiederholen?", exRu: "Можете повторить число?" },
+      { art: "verb", de: "zahlen", pl: "zahlt, zahlte", ru: "Платить", exDe: "Ich möchte bitte zahlen.", exRu: "Я бы хотел заплатить." },
+      { art: "der", de: "Zahn", pl: "die Zähne", ru: "Зуб", exDe: "Mein Zahn tut weh.", exRu: "У меня болит зуб." },
+      { art: "die", de: "Zeit", pl: "die Zeiten", ru: "Время", exDe: "Ich habe heute keine Zeit.", exRu: "У меня сегодня нет времени." },
+      { art: "die", de: "Zeitung", pl: "die Zeitungen", ru: "Газета", exDe: "Er liest jeden Morgen die Zeitung.", exRu: "Каждое утро он читает газету." },
+      { art: "das", de: "Zentrum", pl: "die Zentren", ru: "Центр", exDe: "Das Hotel liegt im Zentrum.", exRu: "Отель находится в центре." },
+      { art: "die", de: "Zigarette", pl: "die Zigaretten", ru: "Сигарета", exDe: "Er raucht eine Zigarette.", exRu: "Он курит сигарету." },
+      { art: "das", de: "Zimmer", pl: "die Zimmer", ru: "Комната, номер", exDe: "Das Zimmer ist sehr hell.", exRu: "Комната очень светлая." },
+      { art: "der", de: "Zucker", pl: "без мн. ч.", ru: "Сахар", exDe: "Möchtest du Zucker im Tee?", exRu: "Хочешь сахар в чай?" },
+      { art: "-", de: "zusammen", pl: "-", ru: "Вместе", exDe: "Wir lernen zusammen Deutsch.", exRu: "Мы вместе учим немецкий." },
+      { art: "der", de: "Zug", pl: "die Züge", ru: "Поезд", exDe: "Der Zug kommt pünktlich an.", exRu: "Поезд прибывает вовремя." },
+      { art: "-", de: "zurück", pl: "-", ru: "Назад, обратно", exDe: "Wann kommst du zurück?", exRu: "Когда ты вернешься?" }
+    ]
+
+        };
+
+        
+// Состояние приложения
+        let allWordsList = [];
+        let activeDeck = [];
+        let currentIndex = 0;
+        let isFlipped = false;
+        let autoAudio = false;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let optionSelected = false;
+        let skipCount = 0;
+        let mode = 'learn';
+        let level = 'A1';
+        const LEVELS = ['A1', 'A2', 'B1', 'B2'];
+        const REVIEW_KEY = 'dfc_review_v1';
+        let review = {};
+
+        // Кэш элементов DOM
+        const flashcardContainer = document.getElementById('flashcard-container');
+        const flashcard = document.getElementById('flashcard');
+        const cardArt = document.getElementById('card-art');
+        const cardWordDe = document.getElementById('card-word-de');
+        const cardPl = document.getElementById('card-pl');
+        const cardExDe = document.getElementById('card-ex-de');
+        const cardWordRu = document.getElementById('card-word-ru');
+        const cardExRu = document.getElementById('card-ex-ru');
+        const cardCategoryTag = document.getElementById('card-category-tag');
+        const cardCounter = document.getElementById('card-counter');
+        const progressBar = document.getElementById('progress-bar');
+        const letterFilter = document.getElementById('letter-filter');
+        const optionsContainer = document.getElementById('options-container');
+        const quizStatus = document.getElementById('quiz-status');
+        const scoreCorrectEl = document.getElementById('score-correct');
+        const scoreWrongEl = document.getElementById('score-wrong');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const btnShuffle = document.getElementById('btn-shuffle');
+        const btnAutoAudio = document.getElementById('btn-auto-audio');
+        const audioIcon = document.getElementById('audio-icon');
+        const btnTheme = document.getElementById('btn-theme');
+        const themeIcon = document.getElementById('theme-icon');
+        const scoreSkipEl = document.getElementById('score-skip');
+        const tabLearn = document.getElementById('tab-learn');
+        const tabReview = document.getElementById('tab-review');
+        const reviewCountEl = document.getElementById('review-count');
+        const levelsEl = document.getElementById('levels');
+        const btnClearReview = document.getElementById('btn-clear-review');
+
+        // Тасование массива (Fisher-Yates)
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Инициализация базы и списка букв
+        function initializeDataset() {
+            allWordsList = [];
+            Object.keys(rawFlashcardsData).sort().forEach(letter => {
+                rawFlashcardsData[letter].forEach(item => {
+                    allWordsList.push({ ...item, category: letter, level: item.level || 'A1' });
+                });
+            });
+            loadReview();
+            populateLetters();
+            renderLevels();
+            buildDeck();
+        }
+
+        // Генерация 4 вариантов ответов (1 правильный, 3 случайных)
+        function generateQuizOptions(currentCard) {
+            optionsContainer.innerHTML = '';
+            optionSelected = false;
+            quizStatus.textContent = 'Выберите 1 из 4';
+            quizStatus.className = 'status';
+
+            const correctRu = currentCard.ru;
+            
+            // Получаем список всех доступных переходов, исключая правильный
+            const otherTranslations = [...new Set(allWordsList.map(w => w.ru).filter(ru => ru !== correctRu))];
+            const shuffledOthers = shuffleArray(otherTranslations);
+            const wrongChoices = shuffledOthers.slice(0, 3);
+
+            // Собираем 4 варианта и перемешиваем
+            const choices = shuffleArray([correctRu, ...wrongChoices]);
+
+            choices.forEach(choiceText => {
+                const btn = document.createElement('button');
+                btn.className = 'opt';
+                btn.innerHTML = `<span>${choiceText}</span> <b class="mark">○</b>`;
+                
+                btn.dataset.val = choiceText;
+                btn.onclick = () => handleOptionClick(btn, choiceText, correctRu);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        // Обработка выбора ответа пользователем
+        function handleOptionClick(selectedBtn, selectedText, correctText) {
+            if (optionSelected) return; // Защита от повторного клика
+            optionSelected = true;
+
+            const allButtons = optionsContainer.querySelectorAll('button');
+
+            if (selectedText === correctText) {
+                // Правильный ответ
+                selectedBtn.className = 'opt right';
+                selectedBtn.querySelector('.mark').textContent = '✓';
+                const curW = activeDeck[currentIndex];
+                const wasInReview = !!review[curW.de];
+                clearFromReview(curW);
+                correctCount++;
+                scoreCorrectEl.textContent = correctCount;
+                quizStatus.textContent = wasInReview ? 'Верно! Убрано из повторения' : 'Верно!';
+                quizStatus.className = 'status ok';
+
+                // Авто-переворот карточки через короткую паузу для наглядности
+                setTimeout(() => {
+                    if (!isFlipped) flipCard();
+                }, 400);
+
+            } else {
+                // Ошибка
+                selectedBtn.className = 'opt wrong';
+                selectedBtn.querySelector('.mark').textContent = '✕';
+                wrongCount++;
+                markReview(activeDeck[currentIndex], 'wrong');
+                scoreWrongEl.textContent = wrongCount;
+                quizStatus.textContent = 'Неверно: в повторение';
+                quizStatus.className = 'status bad';
+
+                // Подсветка правильного ответа
+                allButtons.forEach(btn => {
+                    if (btn.dataset.val === correctText) {
+                        btn.className = 'opt right';
+                        btn.querySelector('.mark').textContent = '✓';
+                    }
+                });
+
+                // Переворачиваем карточку, чтобы показать перевод
+                setTimeout(() => {
+                    if (!isFlipped) flipCard();
+                }, 600);
+            }
+
+            // Отключаем остальные варианты
+            allButtons.forEach(btn => btn.disabled = true);
+        }
+
+        // Обновление интерфейса для текущей карточки
+        function updateUI() {
+            if (!activeDeck || activeDeck.length === 0) {
+                if (isFlipped) { isFlipped = false; flashcard.classList.remove('rotate-y-180'); }
+                cardArt.textContent = "—";
+                cardArt.dataset.art = "";
+                quizStatus.textContent = "";
+                if (mode === 'review') {
+                    cardWordDe.textContent = "Пока пусто 🎉";
+                } else if (levelWords().length === 0) {
+                    cardWordDe.textContent = "Скоро здесь будут слова";
+                } else {
+                    cardWordDe.textContent = "Слова не найдены";
+                }
+                cardPl.textContent = "";
+                cardExDe.textContent = mode === 'review'
+                    ? "Ошибок и пропусков нет. Слова, в которых вы ошибётесь или которые пропустите, появятся здесь."
+                    : (levelWords().length === 0 ? `В уровне ${level} пока нет слов.` : "Выберите другую букву.");
+                cardWordRu.textContent = "—";
+                cardExRu.textContent = "—";
+                cardCounter.textContent = "0 из 0";
+                progressBar.style.width = "0%";
+                optionsContainer.innerHTML = '';
+                btnPrev.disabled = true;
+                btnNext.disabled = true;
+                return;
+            }
+
+            // Возврат в переднее положение
+            if (isFlipped) {
+                isFlipped = false;
+                flashcard.classList.remove('rotate-y-180');
+            }
+
+            const current = activeDeck[currentIndex];
+
+            // Заполнение карточки
+            cardArt.textContent = current.art || "слово";
+            cardArt.dataset.art = current.art || "";
+            cardWordDe.textContent = current.de;
+            if (!current.pl || current.pl === "-") {
+                cardPl.textContent = "";
+            } else if (current.art === "verb") {
+                cardPl.textContent = `Формы: ${current.pl}`;
+            } else if (/^(без|только)/.test(current.pl)) {
+                cardPl.textContent = current.pl.charAt(0).toUpperCase() + current.pl.slice(1);
+            } else {
+                cardPl.textContent = `Мн.ч.: ${current.pl}`;
+            }
+            cardExDe.textContent = current.exDe || "—";
+            cardWordRu.textContent = current.ru;
+            cardExRu.textContent = current.exRu || "—";
+            cardCategoryTag.textContent = `${current.level} · Буква ${current.category}`;
+
+            // Индикаторы и прогресс
+            const total = activeDeck.length;
+            cardCounter.textContent = mode === 'review'
+                ? `Повторение ${currentIndex + 1} из ${total} · ${review[current.de] === 'wrong' ? '❌ ошибка' : (review[current.de] ? '👀 пропуск' : '✅ выучено')}`
+                : `Карточка ${currentIndex + 1} из ${total}`;
+            const percent = ((currentIndex + 1) / total) * 100;
+            progressBar.style.width = `${percent}%`;
+
+            // Состояние кнопок навигации
+            btnPrev.disabled = currentIndex === 0;
+            btnNext.disabled = currentIndex === total - 1;
+
+            // Генерация вариантов ответов
+            generateQuizOptions(current);
+
+            // Озвучка при включенном режиме
+            if (autoAudio) {
+                speakGerman();
+            }
+        }
+
+        // Переворот карточки (Только кликом по самой карточке)
+        function flipCardRaw() {
+            if (activeDeck.length === 0) return;
+            isFlipped = !isFlipped;
+            if (isFlipped) {
+                flashcard.classList.add('rotate-y-180');
+            } else {
+                flashcard.classList.remove('rotate-y-180');
+            }
+        }
+
+        // Навигация
+        function nextCard() {
+            if (currentIndex < activeDeck.length - 1) {
+                finishCurrent();
+                currentIndex++;
+                updateUI();
+            }
+        }
+
+        function prevCard() {
+            if (currentIndex > 0) {
+                finishCurrent();
+                currentIndex--;
+                updateUI();
+            }
+        }
+
+        // Произношение (Google/Browser Speech Synthesis)
+        function speakGerman() {
+            if ('speechSynthesis' in window && activeDeck[currentIndex]) {
+                window.speechSynthesis.cancel();
+                const text = activeDeck[currentIndex].de;
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'de-DE';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Слушатели событий
+        flashcardContainer.addEventListener('click', flipCard);
+
+        letterFilter.addEventListener('change', buildDeck);
+
+        btnShuffle.addEventListener('click', () => {
+            if (activeDeck.length > 0) {
+                activeDeck = shuffleArray(activeDeck);
+                currentIndex = 0;
+                updateUI();
+            }
+        });
+
+        btnAutoAudio.addEventListener('click', () => {
+            autoAudio = !autoAudio;
+            btnAutoAudio.classList.toggle('on', autoAudio);
+            if (autoAudio) speakGerman();
+        });
+
+        
+        btnNext.addEventListener('click', nextCard);
+        btnPrev.addEventListener('click', prevCard);
+
+        // Горячие клавиши
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'ArrowRight') {
+                nextCard();
+            } else if (e.code === 'ArrowLeft') {
+                prevCard();
+            }
+        });
+
+        // ---- Повторение ----
+        function loadReview() {
+            try { review = JSON.parse(localStorage.getItem(REVIEW_KEY)) || {}; } catch (e) { review = {}; }
+            updateReviewBadge();
+        }
+        function saveReview() {
+            try { localStorage.setItem(REVIEW_KEY, JSON.stringify(review)); } catch (e) {}
+            updateReviewBadge();
+        }
+        function updateReviewBadge() { reviewCountEl.textContent = Object.keys(review).length; }
+        function markReview(word, type) {
+            if (type === 'skip' && review[word.de] === 'wrong') return;
+            review[word.de] = type;
+            saveReview();
+        }
+        function clearFromReview(word) {
+            if (review[word.de]) { delete review[word.de]; saveReview(); }
+        }
+        // Пропуск: ушли с карточки, не ответив
+        function finishCurrent() {
+            if (!activeDeck.length || optionSelected) return;
+            markReview(activeDeck[currentIndex], 'skip');
+            skipCount++;
+            scoreSkipEl.textContent = skipCount;
+        }
+        // Подсмотрел: перевернул до ответа, не засчитывается
+        function registerPeek() {
+            optionSelected = true;
+            const cur = activeDeck[currentIndex];
+            markReview(cur, 'skip');
+            skipCount++;
+            scoreSkipEl.textContent = skipCount;
+            optionsContainer.querySelectorAll('button').forEach(b => {
+                b.disabled = true;
+                if (b.dataset.val === cur.ru) {
+                    b.className = 'opt peek';
+                    const m = b.querySelector('.mark');
+                    if (m) m.textContent = '✓';
+                }
+            });
+            quizStatus.textContent = 'Подсмотрел: не засчитано';
+            quizStatus.className = 'status';
+        }
+        function flipCard() {
+            if (activeDeck.length === 0) return;
+            const toBack = !isFlipped;
+            flipCardRaw();
+            if (toBack && !optionSelected) registerPeek();
+        }
+
+        // ---- Уровни, буквы, вкладки ----
+        function levelWords() { return allWordsList.filter(w => w.level === level); }
+        function buildDeck() {
+            let list;
+            if (mode === 'review') {
+                list = allWordsList.filter(w => review[w.de]);
+            } else {
+                list = levelWords();
+                if (letterFilter.value !== 'ALL') list = list.filter(w => w.category === letterFilter.value);
+            }
+            activeDeck = shuffleArray(list);
+            currentIndex = 0;
+            updateUI();
+        }
+        function populateLetters() {
+            const words = levelWords();
+            const counts = {};
+            words.forEach(w => { counts[w.category] = (counts[w.category] || 0) + 1; });
+            letterFilter.innerHTML = '';
+            const all = document.createElement('option');
+            all.value = 'ALL';
+            all.textContent = `Все буквы (${words.length})`;
+            letterFilter.appendChild(all);
+            Object.keys(counts).sort().forEach(l => {
+                const o = document.createElement('option');
+                o.value = l;
+                o.textContent = `Буква "${l}" (${counts[l]})`;
+                letterFilter.appendChild(o);
+            });
+        }
+        function renderLevels() {
+            levelsEl.innerHTML = '';
+            LEVELS.forEach(l => {
+                const n = allWordsList.filter(w => w.level === l).length;
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'lvl' + (l === level ? ' on' : '') + (n === 0 ? ' empty' : '');
+                b.innerHTML = `${l}<small>${n}</small>`;
+                b.onclick = () => { level = l; populateLetters(); renderLevels(); buildDeck(); };
+                levelsEl.appendChild(b);
+            });
+        }
+        function setMode(m) {
+            mode = m;
+            tabLearn.classList.toggle('on', m === 'learn');
+            tabReview.classList.toggle('on', m === 'review');
+            levelsEl.hidden = (m === 'review');
+            letterFilter.disabled = (m === 'review');
+            btnClearReview.hidden = (m !== 'review');
+            buildDeck();
+        }
+        tabLearn.addEventListener('click', () => setMode('learn'));
+        tabReview.addEventListener('click', () => setMode('review'));
+        btnClearReview.addEventListener('click', () => {
+            if (Object.keys(review).length && confirm('Очистить список повторения?')) {
+                review = {};
+                saveReview();
+                buildDeck();
+            }
+        });
+
+        // Запуск
+        window.onload = function() {
+            initializeDataset();
+        };
+    
+</script>
+</body>
+</html>

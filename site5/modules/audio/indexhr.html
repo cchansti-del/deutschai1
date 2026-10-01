@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeutschAI — Слушай и отвечай</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1b1030;--paper:#fff3dc;--pink:#ff3d9a;--yellow:#ffd60a;--cyan:#22d3ee;--lime:#b8f03c;--violet:#8b5cf6;--orange:#ff7a1a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',system-ui,sans-serif;font-weight:700;color:var(--ink);background:var(--paper);background-image:radial-gradient(rgba(27,16,48,.14) 1.3px,transparent 1.5px);background-size:26px 26px;min-height:100vh;padding-bottom:60px}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:4px solid var(--ink);outline-offset:3px}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px}
+header{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+.back-btn{background:#fff;border:3px solid var(--ink);padding:8px 16px;border-radius:999px;font-weight:800;box-shadow:4px 4px 0 var(--ink)}
+h1{font-family:'Unbounded';font-size:clamp(24px,4vw,38px);line-height:1.2;margin:20px 0 24px}
+.hint{background:var(--lime);border:3px solid var(--ink);border-radius:16px;padding:12px 18px;margin-bottom:24px;box-shadow:4px 4px 0 var(--ink);font-size:15px}
+.levels,.texts{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px}
+.lvl-btn{background:#fff;border:3px solid var(--ink);padding:8px 18px;border-radius:999px;font:800 15px 'Unbounded';cursor:pointer;box-shadow:3px 3px 0 var(--ink);color:var(--ink)}
+.lvl-btn.active{background:var(--orange);color:#fff;transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink)}
+.txt-btn{background:#fff;border:3px solid var(--ink);padding:8px 16px;border-radius:14px;font:800 14px 'Nunito';cursor:pointer;box-shadow:3px 3px 0 var(--ink);text-align:left;color:var(--ink)}
+.txt-btn.active{background:var(--yellow);transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink)}
+.card{background:#fff;border:4px solid var(--ink);border-radius:24px;padding:26px;box-shadow:8px 8px 0 var(--ink)}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px}
+.head h2{font:800 20px 'Unbounded'}
+.kind{font-size:13px;opacity:.7;margin-top:6px}
+.badge{background:var(--yellow);border:2px solid var(--ink);padding:4px 12px;border-radius:999px;font-size:14px;font-weight:800}
+.player{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--paper);border:3px solid var(--ink);border-radius:18px;padding:14px;margin-bottom:8px}
+.btn{background:#fff;border:3px solid var(--ink);border-radius:999px;padding:8px 18px;font:800 15px 'Nunito';cursor:pointer;box-shadow:3px 3px 0 var(--ink);color:var(--ink)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn.play{background:var(--pink);color:#fff;font-size:17px}
+.btn:disabled{opacity:.35;cursor:default}
+select{border:3px solid var(--ink);border-radius:999px;padding:7px 12px;font:800 14px 'Nunito';background:#fff;color:var(--ink)}
+.plays,.warn{font-size:13px;margin-bottom:16px}
+.warn{color:#b00046}
+.q{border-top:3px solid var(--paper);padding-top:14px;margin-top:14px}
+.q b{display:block;margin-bottom:10px;line-height:1.35}
+.opt{display:block;width:100%;text-align:left;background:var(--paper);border:2px solid var(--ink);border-radius:14px;padding:10px 14px;margin-bottom:8px;font:700 15px 'Nunito';cursor:pointer;color:var(--ink)}
+.opt.sel{background:var(--cyan)}.opt.ok{background:var(--lime)}.opt.bad{background:#ff9bb8}
+.opt:disabled{cursor:default}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px}
+.res{font:800 17px 'Unbounded'}
+.tr{margin-top:18px;background:var(--paper);border:3px solid var(--ink);border-radius:16px;padding:14px 18px;line-height:1.6}
+.tr p{margin-bottom:6px}
+.tr[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a href="../../index1.html" class="back-btn">← На главную</a>
+    <div style="font-family:'Unbounded';font-size:18px">DeutschAI</div>
+  </header>
+  <h1>Слушай и отвечай 🎧</h1>
+  <div class="hint">Нажми «Слушать», ответь на вопросы, потом нажми «Проверить», и откроется текст. Уровни A1–B2 в стиле заданий Hören Goethe и telc, уровень A0 попроще.</div>
+  <div class="levels" id="levels"></div>
+  <div class="texts" id="texts"></div>
+  <div class="card" id="card"></div>
+</div>
+<script>
+const RF=['Richtig','Falsch'], LV=['A0','A1','A2','B1','B2'];
+// sp:1 — один диктор, sp:2 — два голоса по очереди. Строки текста разделены символом |
+// q: [вопрос, [варианты], номер верного (с 0)]
+const D=[
+{l:'A0',t:'Ich stelle mich vor',k:'Kurzer Text',sp:1,s:'Hallo! Ich heiße Paul.|Ich bin zehn Jahre alt. Ich wohne in Wien.|Ich habe eine Katze. Sie heißt Mimi. Ich mag Pizza.',
+ q:[['Как зовут мальчика?',['Paul','Max','Mimi'],0],['Где он живёт?',['in Berlin','in Wien','in Bonn'],1],['Что любит Paul?',['Pizza','Kuchen','Eis'],0]]},
+{l:'A0',t:'Im Café',k:'Kurzer Dialog',sp:2,s:'Guten Tag! Was möchten Sie?|Einen Tee, bitte.|Sonst noch etwas?|Ja, ein Stück Kuchen, bitte.|Das macht vier Euro.',
+ q:[['Что заказывает гость?',['Tee und Kuchen','Kaffee und Brot','Wasser und Eis'],0],['Гость заказывает кофе.',RF,1],['Сколько он платит?',['3 Euro','4 Euro','5 Euro'],1]]},
+{l:'A0',t:'Meine Familie',k:'Kurzer Text',sp:1,s:'Das ist meine Familie. Mein Vater heißt Karl. Er ist Lehrer.|Meine Mutter heißt Eva. Sie ist Ärztin.|Ich habe einen Bruder. Er ist sechs Jahre alt.',
+ q:[['Кем работает отец?',['Lehrer','Arzt','Koch'],0],['Мама — врач.',RF,0],['Сколько лет брату?',['4','6','8'],1]]},
+
+{l:'A1',t:'Am Bahnhof',k:'Start Deutsch 1 · Teil 1 · Dialog',sp:2,s:'Entschuldigung, wann fährt der Zug nach München?|Um vierzehn Uhr zwanzig, von Gleis fünf.|Danke. Und was kostet die Fahrkarte?|Achtunddreißig Euro.',
+ q:[['Wann fährt der Zug?',['14.20 Uhr','12.20 Uhr','14.50 Uhr'],0],['Von welchem Gleis fährt er?',['Gleis 3','Gleis 5','Gleis 7'],1],['Die Fahrkarte kostet 28 Euro.',RF,1]]},
+{l:'A1',t:'Im Supermarkt',k:'Start Deutsch 1 · Teil 2 · Durchsage',sp:1,s:'Achtung, liebe Kunden! Heute im Angebot: Äpfel, ein Kilo für zwei Euro, und Käse für drei Euro fünfzig.|Unser Supermarkt ist heute bis zwanzig Uhr geöffnet.|Wir wünschen Ihnen einen schönen Tag.',
+ q:[['Was ist im Angebot?',['Äpfel und Käse','Brot und Milch','Fisch und Wurst'],0],['Was kostet ein Kilo Äpfel?',['2 Euro','3 Euro','5 Euro'],0],['Der Supermarkt ist heute bis 18 Uhr geöffnet.',RF,1]]},
+{l:'A1',t:'Nachricht von Sarah',k:'Start Deutsch 1 · Teil 3 · Anrufbeantworter',sp:1,s:'Hallo Tom, hier ist Sarah. Ich kann morgen nicht kommen, ich muss zum Arzt.|Aber wir können uns am Freitag treffen, um neunzehn Uhr im Kino.|Ruf mich bitte an! Tschüs.',
+ q:[['Warum kommt Sarah morgen nicht?',['Sie muss zum Arzt.','Sie muss arbeiten.','Sie ist im Urlaub.'],0],['Wann treffen sie sich?',['Freitag um 19 Uhr','Samstag um 19 Uhr','Freitag um 17 Uhr'],0],['Sie treffen sich im Restaurant.',RF,1]]},
+
+{l:'A2',t:'Die Arztpraxis',k:'Goethe A2 / telc A2 · Telefonansage',sp:1,s:'Guten Tag, Sie sind verbunden mit der Praxis von Doktor Weber.|Unsere Sprechzeiten sind Montag bis Donnerstag von acht bis zwölf Uhr und von fünfzehn bis achtzehn Uhr. Am Freitag sind wir nur vormittags da.|Bei Notfällen wählen Sie bitte die Eins-Eins-Zwei. Für einen Termin drücken Sie die Eins.',
+ q:[['Wann ist die Praxis am Freitag geöffnet?',['nur vormittags','den ganzen Tag','nur nachmittags'],0],['Welche Nummer wählt man bei einem Notfall?',['110','112','116'],1],['Was drückt man für einen Termin?',['die Eins','die Zwei','die Null'],0]]},
+{l:'A2',t:'Die Wohnung',k:'Goethe A2 / telc A2 · Dialog',sp:2,s:'Wie gefällt Ihnen die Wohnung?|Sie ist schön hell, aber die Küche ist ziemlich klein.|Dafür hat sie einen großen Balkon, und die Miete ist mit sechshundert Euro günstig.|Sind die Nebenkosten schon dabei?|Nein, dazu kommen noch hundertzwanzig Euro.|Gut, ich überlege es mir bis morgen.',
+ q:[['Was gefällt dem Mann nicht so gut?',['der Balkon','die kleine Küche','die Lage'],1],['Wie hoch ist die Miete?',['500 Euro','600 Euro','720 Euro'],1],['Die Nebenkosten sind in der Miete enthalten.',RF,1]]},
+{l:'A2',t:'Das Wetter',k:'Goethe A2 / telc A2 · Radio',sp:1,s:'Und jetzt das Wetter für das Wochenende. Am Samstag scheint in ganz Bayern die Sonne, bei Temperaturen bis zu vierundzwanzig Grad.|Am Sonntag ziehen von Westen Wolken auf, und am Nachmittag regnet es.|Für Montag erwarten wir wieder trockenes Wetter, aber es wird kühler.',
+ q:[['Wie ist das Wetter am Samstag?',['sonnig','regnerisch','windig'],0],['Wann regnet es?',['Samstagabend','Sonntagnachmittag','Montagmorgen'],1],['Am Montag wird es wärmer.',RF,1]]},
+
+{l:'B1',t:'Mit dem Rad zur Arbeit',k:'Goethe B1 / telc B1 · Interview',sp:2,s:'Herr Klein, Sie fahren seit fünf Jahren jeden Tag mit dem Fahrrad zur Arbeit. Warum?|Anfangs wollte ich Geld sparen, weil das Parken in der Innenstadt so teuer ist. Inzwischen fahre ich vor allem, weil ich mich danach fitter fühle.|Und im Winter?|Da ist es manchmal anstrengend, aber mit guter Kleidung geht das. Nur bei Glatteis nehme ich den Bus.',
+ q:[['Warum hat Herr Klein angefangen?',['Er wollte Geld sparen.','Er wollte fitter werden.','Sein Auto war kaputt.'],0],['Warum fährt er heute vor allem Rad?',['wegen der Parkgebühren','wegen des Wetters','weil er sich fitter fühlt'],2],['Was macht er bei Glatteis?',['Er fährt Rad.','Er nimmt den Bus.','Er bleibt zu Hause.'],1]]},
+{l:'B1',t:'Verspätung',k:'Goethe B1 / telc B1 · Durchsage',sp:1,s:'Achtung an Gleis vier! Der ICE fünf-neun-sieben nach Hamburg hat heute etwa zwanzig Minuten Verspätung. Grund dafür ist eine Signalstörung.|Reisende nach Hannover nutzen bitte den Regionalexpress auf Gleis sieben, der in zehn Minuten abfährt.|Die Deutsche Bahn bittet um Entschuldigung.',
+ q:[['Wie viel Verspätung hat der ICE?',['10 Minuten','20 Minuten','40 Minuten'],1],['Was ist der Grund?',['schlechtes Wetter','ein Unfall','eine Signalstörung'],2],['Was sollen Reisende nach Hannover tun?',['auf den ICE warten','den Regionalexpress nehmen','ein Taxi rufen'],1]]},
+{l:'B1',t:'Studienwahl',k:'Goethe B1 / telc B1 · Gespräch',sp:2,s:'Hast du dich schon für ein Studienfach entschieden?|Ich schwanke noch zwischen Informatik und Medizin. Informatik interessiert mich mehr, aber meine Eltern wünschen sich, dass ich Arzt werde.|Es ist doch dein Leben. Mach ein Praktikum in beiden Bereichen, dann weißt du es besser.|Gute Idee. Das probiere ich im Sommer aus.',
+ q:[['Zwischen welchen Fächern schwankt Jonas?',['Informatik und Medizin','Medizin und Jura','Informatik und Physik'],0],['Was wünschen sich seine Eltern?',['dass er Informatiker wird','dass er Arzt wird','dass er ins Ausland geht'],1],['Was rät Lena?',['ein Praktikum zu machen','noch ein Jahr zu warten','die Eltern zu fragen'],0]]},
+
+{l:'B2',t:'Mehrweg statt Einweg',k:'Goethe B2 / telc B2 · Radiobeitrag',sp:1,s:'In Deutschland müssen Restaurants und Lieferdienste ihren Kunden seit dem Jahr 2023 zusätzlich zu Einwegverpackungen auch eine Mehrwegalternative anbieten.|Verbraucherschützer begrüßen die Regelung, bemängeln aber, dass viele Betriebe das Angebot kaum bewerben.|Dadurch greifen die meisten Kunden weiterhin zur Einwegverpackung, obwohl das Pfandsystem eigentlich unkompliziert ist.',
+ q:[['Was gilt seit 2023?',['Einwegverpackungen sind verboten.','Es muss auch Mehrweg angeboten werden.','Kunden zahlen mehr für Essen.'],1],['Was kritisieren die Verbraucherschützer?',['zu hohe Pfandpreise','dass das Angebot kaum beworben wird','dass es zu viele Regeln gibt'],1],['Die meisten Kunden wählen inzwischen Mehrweg.',RF,1]]},
+{l:'B2',t:'Schlaf und Lernen',k:'Goethe B2 / telc B2 · Vortrag',sp:1,s:'Schlaf spielt für das Lernen eine größere Rolle, als viele glauben. Während wir schlafen, ordnet das Gehirn die Informationen des Tages und speichert wichtige Inhalte im Langzeitgedächtnis.|Studien zeigen, dass Schüler, die vor einer Prüfung ausreichend schlafen, deutlich bessere Ergebnisse erzielen als diejenigen, die die ganze Nacht durchlernen.|Fachleute empfehlen deshalb, den Stoff auf mehrere Tage zu verteilen und am Abend vor der Prüfung nicht zu spät ins Bett zu gehen.',
+ q:[['Was passiert im Schlaf?',['Das Gehirn ordnet die Informationen.','Das Gehirn ruht sich völlig aus.','Man vergisst den Tagesstoff.'],0],['Wer erzielt bessere Ergebnisse?',['wer die Nacht durchlernt','wer ausreichend schläft','wer früh aufsteht'],1],['Was empfehlen die Fachleute?',['den Stoff auf mehrere Tage zu verteilen','erst kurz vor der Prüfung zu lernen','tagsüber zu schlafen'],0]]},
+{l:'B2',t:'Homeoffice: ja oder nein?',k:'Goethe B2 / telc B2 · Diskussion',sp:2,s:'Ich halte es für einen Fehler, das Homeoffice wieder abzuschaffen. Die meisten Mitarbeiter sind zu Hause konzentrierter und sparen sich stundenlange Fahrten.|Das mag sein, aber gerade jüngere Kollegen profitieren davon, wenn sie Erfahrene im Büro um Rat fragen können. Ein Mittelweg wäre sinnvoll: zwei oder drei Tage im Büro, den Rest von zu Hause.|Damit könnte ich leben, solange die Firma die Regeln flexibel handhabt.',
+ q:[['Was ist die Position des ersten Sprechers?',['Das Homeoffice soll bleiben.','Alle sollen ins Büro zurück.','Das Büro ist überflüssig.'],0],['Warum ist die zweite Sprecherin skeptisch?',['Zu Hause ist es zu laut.','Jüngere Kollegen brauchen den Kontakt im Büro.','Die Fahrten sind zu kurz.'],1],['Welchen Kompromiss schlägt sie vor?',['zwei bis drei Tage im Büro','einen Tag im Büro','nur Homeoffice'],0]]}
+];
+
+const $=id=>document.getElementById(id);
+let lv='A0', idx=0, cur=null, sel=[], checked=false, plays=0, tk=0, voices=[];
+let P={};try{P=JSON.parse(localStorage.getItem('de_listening')||'{}')}catch(e){}
+const save=()=>{try{localStorage.setItem('de_listening',JSON.stringify(P))}catch(e){}};
+const key=d=>d.l+'|'+d.t;
+const list=()=>D.filter(d=>d.l===lv);
+
+function loadV(){voices=(window.speechSynthesis?speechSynthesis.getVoices():[]).filter(v=>v.lang.toLowerCase().replace('_','-').startsWith('de'))}
+if(window.speechSynthesis){speechSynthesis.onvoiceschanged=loadV;loadV()}
+
+function stop(){tk++;if(window.speechSynthesis)speechSynthesis.cancel();if($('play'))$('play').textContent='▶ Слушать'}
+function play(){
+  if(!window.speechSynthesis){$('warn').textContent='Ваш браузер не умеет озвучивать текст. Попробуйте Chrome, Edge или Safari.';return}
+  stop();loadV();
+  $('warn').textContent=voices.length?'':'Немецкий голос не найден: установите его в настройках телефона или компьютера (язык Deutsch, речь).';
+  const lines=cur.s.split('|'),my=tk;let i=0;plays++;$('plays').textContent='Прослушано раз: '+plays;$('play').textContent='🔁 Ещё раз';
+  const next=()=>{
+    if(my!==tk||i>=lines.length)return;
+    const two=cur.sp===2,who=two?i%2:0,u=new SpeechSynthesisUtterance(lines[i]);
+    u.lang='de-DE';u.rate=+$('spd').value;
+    if(voices.length)u.voice=voices[who%voices.length];
+    u.pitch=(two&&voices.length<2)?(who?1.35:0.85):1;
+    u.onend=()=>{if(my!==tk)return;i++;setTimeout(next,two?350:150)};
+    u.onerror=()=>{};
+    speechSynthesis.speak(u);
+  };
+  next();
+}
+
+function tabs(){
+  $('levels').innerHTML=LV.map(l=>`<button class="lvl-btn${l===lv?' active':''}" data-l="${l}">${l}${l==='A0'?' (простой)':''}</button>`).join('');
+  $('texts').innerHTML=list().map((d,i)=>`<button class="txt-btn${i===idx?' active':''}" data-i="${i}">${P[key(d)]!=null?'✅ ':''}${d.t}</button>`).join('');
+}
+function show(){
+  stop();cur=list()[idx];sel=[];checked=false;plays=0;tabs();
+  $('card').innerHTML=`<div class="head"><div><h2>${cur.t}</h2><div class="kind">${cur.k}</div></div><span class="badge">${cur.l}</span></div>
+  <div class="player"><button class="btn play" id="play">▶ Слушать</button><button class="btn" id="stop">⏹ Стоп</button>
+  <select id="spd" aria-label="Скорость"><option value="0.75">Медленно</option><option value="0.9" selected>Обычно</option><option value="1.05">Быстро</option></select></div>
+  <div class="plays" id="plays">Прослушано раз: 0</div><div class="warn" id="warn"></div>
+  <div id="qs">${cur.q.map((x,i)=>`<div class="q" data-i="${i}"><b>${i+1}. ${x[0]}</b>${x[1].map((o,j)=>`<button class="opt" data-j="${j}">${o}</button>`).join('')}</div>`).join('')}</div>
+  <div class="bar"><button class="btn play" id="chk">Проверить</button><button class="btn" id="prev">← Назад</button><button class="btn" id="next">Дальше →</button><span class="res" id="res"></span></div>
+  <div class="tr" id="tr" hidden></div>`;
+  $('play').onclick=play;$('stop').onclick=stop;$('chk').onclick=check;
+  $('prev').disabled=idx===0;$('next').disabled=idx>=list().length-1;
+  $('prev').onclick=()=>{idx--;show();scrollTo(0,0)};$('next').onclick=()=>{idx++;show();scrollTo(0,0)};
+  document.querySelectorAll('.q').forEach(box=>box.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+    if(checked)return;sel[+box.dataset.i]=+b.dataset.j;box.querySelectorAll('.opt').forEach(x=>x.classList.toggle('sel',x===b))}));
+}
+function check(){
+  if(checked)return;
+  const miss=cur.q.length-sel.filter(v=>v!=null).length;
+  if(miss){$('res').textContent='Ответьте на все вопросы (осталось '+miss+')';return}
+  checked=true;stop();let score=0;
+  document.querySelectorAll('.q').forEach(box=>{const i=+box.dataset.i,q=cur.q[i];if(sel[i]===q[2])score++;
+    box.querySelectorAll('.opt').forEach((b,j)=>{b.disabled=true;b.classList.remove('sel');
+      if(j===q[2])b.classList.add('ok');else if(j===sel[i])b.classList.add('bad')})});
+  if(P[key(cur)]==null||score>P[key(cur)]){P[key(cur)]=score;save()}
+  $('res').textContent='Результат: '+score+' из '+cur.q.length+(score===cur.q.length?' 🎉':'');
+  $('tr').hidden=false;$('tr').innerHTML='<b>Текст:</b><br>'+cur.s.split('|').map(l=>'<p>'+l+'</p>').join('');
+  tabs();
+}
+$('levels').onclick=e=>{const b=e.target.closest('.lvl-btn');if(b){lv=b.dataset.l;idx=0;show()}};
+$('texts').onclick=e=>{const b=e.target.closest('.txt-btn');if(b){idx=+b.dataset.i;show()}};
+window.addEventListener('pagehide',stop);
+show();
+</script>
+</body>
+</html>

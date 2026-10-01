@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Модуль 5: Чтение и тесты — DeutschAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1b1030;
+  --paper: #fff3dc;
+  --pink: #ff3d9a;
+  --yellow: #ffd60a;
+  --cyan: #22d3ee;
+  --lime: #b8f03c;
+  --violet: #8b5cf6;
+  --green: #10b981;
+  --red: #ef4444;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--paper);
+  background-image: radial-gradient(rgba(27,16,48,.14) 1.3px, transparent 1.5px);
+  background-size: 26px 26px;
+  min-height: 100vh;
+  padding-bottom: 60px;
+}
+a { color: inherit; text-decoration: none; }
+.wrap { max-width: 800px; margin: 0 auto; padding: 0 20px; }
+
+/* Шапка */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+}
+.back-btn {
+  background: #fff;
+  border: 3px solid var(--ink);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-weight: 800;
+  box-shadow: 4px 4px 0 var(--ink);
+  transition: transform .1s, box-shadow .1s;
+}
+.back-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+
+/* Переключатель уровней */
+.level-selector {
+  display: flex;
+  gap: 8px;
+  margin: 20px 0;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.lvl-btn {
+  background: #fff;
+  border: 3px solid var(--ink);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--ink);
+  transition: all .15s;
+}
+.lvl-btn.active {
+  background: var(--lime);
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+/* Карточка текста */
+.reading-card {
+  background: #fff;
+  border: 4px solid var(--ink);
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 8px 8px 0 var(--ink);
+  margin-top: 20px;
+}
+.card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.badge {
+  background: var(--yellow);
+  border: 2px solid var(--ink);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 800;
+}
+h1 { font-family: 'Unbounded', sans-serif; font-size: 22px; margin-bottom: 16px; }
+.text-body {
+  font-size: 17px;
+  line-height: 1.6;
+  background: #fafafa;
+  border: 2px dashed var(--ink);
+  padding: 18px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+}
+
+/* Словарь */
+.vocab-box {
+  background: #f0fdf4;
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 28px;
+}
+.vocab-title { font-family: 'Unbounded', sans-serif; font-size: 14px; margin-bottom: 10px; }
+.vocab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.vocab-item { font-size: 14px; }
+.vocab-item b { color: var(--violet); }
+
+/* Тесты */
+.quiz-section { display: flex; flex-direction: column; gap: 20px; }
+.question-block {
+  border-top: 2px solid #eee;
+  padding-top: 16px;
+}
+.q-text { font-weight: 800; font-size: 16px; margin-bottom: 12px; }
+.options { display: flex; flex-direction: column; gap: 8px; }
+.opt-btn {
+  background: #fff;
+  border: 2px solid var(--ink);
+  padding: 12px 16px;
+  border-radius: 12px;
+  text-align: left;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .1s;
+}
+.opt-btn:hover:not(:disabled) { background: #f3f4f6; }
+.opt-btn.correct { background: var(--lime) !important; border-color: var(--ink); }
+.opt-btn.wrong { background: #fca5a5 !important; border-color: var(--ink); }
+
+/* Пагинация */
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+}
+.nav-btn {
+  background: var(--pink);
+  color: #fff;
+  border: 3px solid var(--ink);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.nav-btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; transform: none; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <a href="../../index.html" class="back-btn">← На главную</a>
+    <div style="font-family:'Unbounded'; font-weight:800;">📖 Чтение</div>
+  </header>
+
+  <div class="level-selector">
+    <button class="lvl-btn active" onclick="setLevel('A0')">A0</button>
+    <button class="lvl-btn" onclick="setLevel('A1')">A1</button>
+    <button class="lvl-btn" onclick="setLevel('A2')">A2 (Goethe/telc)</button>
+    <button class="lvl-btn" onclick="setLevel('B1')">B1 (Goethe/telc)</button>
+    <button class="lvl-btn" onclick="setLevel('B2')">B2 (Goethe/telc)</button>
+  </div>
+
+  <main class="reading-card" id="app">
+    <!-- Контент динамически загружается через JS -->
+  </main>
+</div>
+
+<script>
+const data = [
+  // --- A0 ---
+  { id:"a0_1", level:"A0", title:"Das ist Anna", text:"Hallo! Ich heiße Anna. Ich bin 20 Jahre alt. Ich komme aus Deutschland. Ich wohne in Berlin. Ich lerne Deutsch und Englisch. Das ist mein Hund. Er heißt Bello.", vocabulary:[{de:"Ich heiße",ru:"Меня зовут"},{de:"Ich komme aus...",ru:"Я из..."},{de:"Ich wohne in...",ru:"Я живу в..."},{de:"Mein Hund",ru:"Моя собака"}], questions:[{question:"Wie heißt das Mädchen?",options:["Bello","Anna","Maria"],correct:1},{question:"Wo wohnt Anna?",options:["In Berlin","In Wien","In München"],correct:0},{question:"Wer ist Bello?",options:["Ein Katze","Ein Bruder","Ein Hund"],correct:2}] },
+  { id:"a0_2", level:"A0", title:"Mein Tag", text:"Guten Morgen! Es ist 7 Uhr. Ich stehe auf. Ich trinke Kaffee und esse Brot. Um 8 Uhr gehe ich zur Arbeit. Ich arbeite viel. Am Abend sehe ich fern. Gute Nacht!", vocabulary:[{de:"Ich stehe auf",ru:"Я встаю"},{de:"Ich trinke Kaffee",ru:"Я пью кофе"},{de:"Ich arbeite",ru:"Я работаю"},{de:"Am Abend",ru:"Вечером"}], questions:[{question:"Wann steht die Person auf?",options:["Um 6 Uhr","Um 7 Uhr","Um 8 Uhr"],correct:1},{question:"Was trinkt die Person?",options:["Tee","Wasser","Kaffee"],correct:2},{question:"Was macht die Person am Abend?",options:["Sie liest ein Buch","Sie sieht fern","Sie schläft"],correct:1}] },
+  { id:"a0_3", level:"A0", title:"Im Supermarkt", text:"Ich bin im Supermarkt. Ich kaufe Obst und Gemüse. Ich brauche Äpfel, Bananen und Tomaten. Die Äpfel sind rot. Ich kaufe auch Milch und Brot. Das macht 10 Euro.", vocabulary:[{de:"Obst und Gemüse",ru:"Фрукты и овощи"},{de:"Ich brauche",ru:"Мне нужно"},{de:"Das macht...",ru:"Это стоит... / Итого..."}], questions:[{question:"Wo ist die Person?",options:["Im Park","Im Supermarkt","Zu Hause"],correct:1},{question:"Welche Farbe haben die Äpfel?",options:["Grün","Gelb","Rot"],correct:2},{question:"Wie viel kostet alles?",options:["5 Euro","10 Euro","20 Euro"],correct:1}] },
+  { id:"a0_4", level:"A0", title:"Meine Familie", text:"Das ist meine Familie. Mein Vater heißt Thomas. Meine Mutter heißt Julia. Ich habe einen Bruder. Er heißt Max. Max spielt gern Fußball. Wir wohnen zusammen in einem Haus.", vocabulary:[{de:"Die Familie",ru:"Семья"},{de:"Der Bruder",ru:"Брат"},{de:"Fußball spielen",ru:"Играть в футбол"},{de:"Zusammen",ru:"Вместе"}], questions:[{question:"Wie heißt der Vater?",options:["Thomas","Max","Alex"],correct:0},{question:"Wer spielt gern Fußball?",options:["Der Vater","Die Mutter","Der Bruder"],correct:2},{question:"Wo wohnt die Familie?",options:["In einer Wohnung","In einem Haus","Im Hotel"],correct:1}] },
+  { id:"a0_5", level:"A0", title:"Mein Zimmer", text:"Mein Zimmer ist klein, aber schön. Hier steht ein Bett, ein Tisch und ein Stuhl. Auf dem Tisch liegt ein Buch. Das Buch ist interessant. Mein Zimmer hat ein Fenster.", vocabulary:[{de:"Das Zimmer",ru:"Комната"},{de:"Klein, aber schön",ru:"Маленькая, но красивая"},{de:"Auf dem Tisch",ru:"На столе"},{de:"Das Fenster",ru:"Окно"}], questions:[{question:"Wie ist das Zimmer?",options:["Groß und dunkel","Klein, aber schön","Alt und kalt"],correct:1},{question:"Was liegt auf dem Tisch?",options:["Ein Handy","Ein Buch","Ein Apfel"],correct:1},{question:"Was steht im Zimmer?",options:["Ein Bett, ein Tisch und ein Stuhl","Ein Fernseher","Ein Schrank"],correct:0}] },
+  { id:"a0_6", level:"A0", title:"Meine Hobbys", text:"Ich habe viele Hobbys. Ich schwimme gern im Sommer. Im Winter fahre ich Ski. Ich höre auch sehr gern Musik. Mein Lieblingssänger ist Ed Sheeran. Musik macht mich glücklich.", vocabulary:[{de:"Das Hobby",ru:"Хобби"},{de:"Schwimmen",ru:"Плавать"},{de:"Musik hören",ru:"Слушать музыку"},{de:"Glücklich",ru:"Счастливый"}], questions:[{question:"Was macht die Person im Sommer?",options:["Sie fährt Ski","Sie schwimmt","Sie liest"],correct:1},{question:"Was hört die Person gern?",options:["Radio","Musik","Podcasts"],correct:1},{question:"Wer ist der Lieblingssänger?",options:["Ed Sheeran","Marco Reus","Michael Jackson"],correct:0}] },
+  { id:"a0_7", level:"A0", title:"Das Wetter heute", text:"Heute scheint die Sonne. Es ist warm. Die Temperatur ist 22 Grad. Die Menschen gehen im Park spazieren. Kinder spielen mit einem Ball. Es ist ein schöner Tag!", vocabulary:[{de:"Das Wetter",ru:"Погода"},{de:"Die Sonne scheint",ru:"Солнце светит"},{de:"Spazieren gehen",ru:"Гулять"},{de:"Ein schöner Tag",ru:"Прекрасный день"}], questions:[{question:"Wie ist das Wetter heute?",options:["Es regnet","Die Sonne scheint","Es schneit"],correct:1},{question:"Wie viel Grad ist es?",options:["10 Grad","15 Grad","22 Grad"],correct:2},{question:"Wo gehen die Menschen spazieren?",options:["Im Park","Im Wald","In der Stadt"],correct:0}] },
+  { id:"a0_8", level:"A0", title:"Mein Haustier", text:"Ich habe eine Katze. Sie heißt Luna. Luna ist weiß und sehr klein. Sie schläft oft auf dem Sofa. Luna trinkt gern Milch und frisst Fisch. Ich liebe meine Katze.", vocabulary:[{de:"Das Haustier",ru:"Домашнее животное"},{de:"Die Katze",ru:"Кошка"},{de:"Schlafen",ru:"Спать"},{de:"Fressen",ru:"Есть (о животных)"}], questions:[{question:"Was für ein Tier hat die Person?",options:["Einen Hund","Eine Katze","Einen Vogel"],correct:1},{question:"Welche Farbe hat Luna?",options:["Schwarz","Braun","Weiß"],correct:2},{question:"Wo schläft Luna oft?",options:["Auf dem Bett","Auf dem Sofa","Unter dem Stuhl"],correct:1}] },
+  { id:"a0_9", level:"A0", title:"In der Schule", text:"Lukas geht in die Schule. Er ist 9 Jahre alt. Lukas mag Mathematik und Kunst. Seine Lehrerin heißt Frau Meyer. Frau Meyer ist sehr nett. In der Pause spielt Lukas mit seinen Freunden.", vocabulary:[{de:"Die Schule",ru:"Школа"},{de:"Die Lehrerin",ru:"Учительница"},{de:"Nett",ru:"Милая / Добрая"},{de:"Die Pause",ru:"Перемена"}], questions:[{question:"Wie alt ist Lukas?",options:["7 Jahre","9 Jahre","10 Jahre"],correct:1},{question:"Wie heißt die Lehrerin?",options:["Frau Schmidt","Frau Meyer","Frau Müller"],correct:1},{question:"Was macht Lukas in der Pause?",options:["Er schläft","Er isst Brot","Er spielt mit Freunden"],correct:2}] },
+  { id:"a0_10", level:"A0", title:"Die Farben", text:"Die Welt ist bunt. Der Himmel ist blau. Das Gras ist grün. Die Sonne ist gelb. Rosen sind rot. Welche Farbe magst du? Meine Lieblingsfarbe ist Blau.", vocabulary:[{de:"Bunt",ru:"Красочный / Цветной"},{de:"Der Himmel",ru:"Небо"},{de:"Das Gras",ru:"Трава"},{de:"Die Lieblingsfarbe",ru:"Любимый цвет"}], questions:[{question:"Welche Farbe hat der Himmel?",options:["Grün","Blau","Rot"],correct:1},{question:"Welche Farbe hat die Sonne?",options:["Gelb","Weiß","Blau"],correct:0},{question:"Was ist die Lieblingsfarbe des Autors?",options:["Grün","Rot","Blau"],correct:2}] },
+
+  // --- A1 ---
+  { id:"a1_1", level:"A1", title:"Meine neue Wohnung", text:"Seit zwei Wochen wohne ich in München. Meine neue Wohnung hat drei Zimmer, eine Küche und ein Badezimmer. Der Balkon ist besonders schön. Dort trinke ich morgens oft meinen Kaffee. Die Wohnung liegt im dritten Stock. Es gibt leider keinen Aufzug, aber das ist gutes Training!", vocabulary:[{de:"Die Wohnung",ru:"Квартира"},{de:"Der Balkon",ru:"Балкон"},{de:"Der Aufzug",ru:"Лифт"},{de:"Das Training",ru:"Тренировка"}], questions:[{question:"Wo wohnt die Person seit zwei Wochen?",options:["In Berlin","In München","In Hamburg"],correct:1},{question:"Was macht die Person morgens auf dem Balkon?",options:["Sie liest Zeitung","Sie trinkt Kaffee","Sie macht Sport"],correct:1},{question:"Gibt es einen Aufzug im Haus?",options:["Ja","Nein","Nur im Sommer"],correct:1}] },
+  { id:"a1_2", level:"A1", title:"Ein Besuch im Café", text:"Am Samstag treffe ich meine Freundin Sarah im Café „Central“. Wir bestellen zwei Stück Kuchen und eine Kanne Tee. Der Kuchen schmeckt sehr lecker. Wir sprechen über unsere Arbeit und den Urlaub. Nach einer Stunde bezahlen wir und gehen zusammen im Park spazieren.", vocabulary:[{de:"Bestellen",ru:"Заказывать"},{de:"Der Kuchen",ru:"Пирог / Пирожное"},{de:"Schmecken",ru:"Быть на вкус"},{de:"Bezahlen",ru:"Платить"}], questions:[{question:"Mit wem trifft sich die Person?",options:["Mit der Mutter","Mit Sarah","Mit dem Bruder"],correct:1},{question:"Was bestellen sie im Café?",options:["Pizza und Cola","Kuchen und Tee","Eis und Kaffee"],correct:1},{question:"Wohin gehen sie nach dem Café?",options:["Nach Hause","Ins Kino","In den Park"],correct:2}] },
+  { id:"a1_3", level:"A1", title:"Mein Lieblingshobby: Kochen", text:"Ich koche sehr gerne für meine Freunde. Am Wochenende habe ich Zeit dafür. Zuerst gehe ich auf den Markt und kaufe frische Zutaten. Heute mache ich eine italienische Pasta mit Tomaten und Basilikum. Alle sagen, dass es fantastisch schmeckt. Kochen entspannt mich sehr.", vocabulary:[{de:"Die Zutaten",ru:"Ингредиенты"},{de:"Frisch",ru:"Свежий"},{de:"Entspannen",ru:"Расслаблять"},{de:"Das Wochenende",ru:"Выходные"}], questions:[{question:"Für wen kocht die Person gerne?",options:["Für die Eltern","Für ihre Freunde","Nur für sich selbst"],correct:1},{question:"Wo kauft die Person die Zutaten?",options:["Auf dem Markt","Im Supermarkt","Im Internet"],correct:0},{question:"Was kocht die Person heute?",options:["Eine Suppe","Italienische Pasta","Einen Salat"],correct:1}] },
+  { id:"a1_4", level:"A1", title:"Ein Arbeitstag von Martin", text:"Martin arbeitet als Programmierer bei einer IT-Firma. Sein Arbeitstag beginnt um 9 Uhr. Er sitzt viel vor dem Computer und schreibt Codes. Um 12:30 Uhr macht er Mittagspause in der Kantine. Er arbeitet bis 17:30 Uhr. Nach der Arbeit fährt er oft mit dem Fahrrad nach Hause.", vocabulary:[{de:"Der Programmierer",ru:"Программист"},{de:"Die Mittagspause",ru:"Обед / Перерыв"},{de:"Die Kantine",ru:"Столовая"},{de:"Mit dem Fahrrad fahren",ru:"Ехать на велосипеде"}], questions:[{question:"Was ist Martins Beruf?",options:["Lehrer","Programmierer","Arzt"],correct:1},{question:"Wann macht Martin Mittagspause?",options:["Um 12:00 Uhr","Um 12:30 Uhr","Um 13:00 Uhr"],correct:1},{question:"Wie fährt Martin nach der Arbeit nach Hause?",options:["Mit dem Bus","Mit dem Auto","Mit dem Fahrrad"],correct:2}] },
+  { id:"a1_5", level:"A1", title:"Einkaufen für die Party", text:"Lisa feiert am Freitag ihren Geburtstag. Sie lädt zehn Freunde ein. Deshalb muss sie viel einkaufen. Sie braucht Getränke, Snacks, Brot und Käse. Auch eine große Geburtstagstorte steht auf ihrer Liste. Ihr Bruder hilft ihr beim Tragen der Taschen.", vocabulary:[{de:"Geburtstag feiern",ru:"Праздновать день рождения"},{de:"Einladen",ru:"Приглашать"},{de:"Die Getränke",ru:"Напитки"},{de:"Tragen",ru:"Нести"}], questions:[{question:"Welches Fest feiert Lisa am Freitag?",options:["Hochzeit","Geburtstag","Neujahr"],correct:1},{question:"Wie viele Freunde lädt Lisa ein?",options:["5 Freunde","8 Freunde","10 Freunde"],correct:2},{question:"Wer hilft Lisa beim Tragen?",options:["Ihre Mutter","Ihr Bruder","Ihr Freund"],correct:1}] },
+  { id:"a1_6", level:"A1", title:"Urlaub in den Bergen", text:"Im Sommer macht Familie Weber Urlaub in Österreich. Sie mieten eine kleine Hütte in den Bergen. Jeden Tag wandern sie und genießen die frische Luft. Die Kinder mögen die Kühe auf den Wiesen. Am Abenden sitzen alle zusammen am Feuer und spielen Kartenspiele.", vocabulary:[{de:"Die Hütte",ru:"Хижина / Домик"},{de:"Wandern",ru:"Ходить в поход"},{de:"Die Wiese",ru:"Луг"},{de:"Das Feuer",ru:"Огонь / Костер"}], questions:[{question:"Wo macht Familie Weber Urlaub?",options:["In Deutschland","In Österreich","In der Schweiz"],correct:1},{question:"Was machen sie jeden Tag?",options:["Sie schwimmen im Meer","Sie wandern","Sie fahren Auto"],correct:1},{question:"Was spielen sie am Abend?",options:["Videospiele","Schach","Kartenspiele"],correct:2}] },
+  { id:"a1_7", level:"A1", title:"Der Deutschkurs", text:"Maria besucht einen Deutschkurs an der Volkshochschule. Der Kurs findet zweimal pro Woche statt: montags und mittwochs. Der Unterricht beginnt um 18 Uhr. Die Gruppe besteht aus zwölf Personen aus verschiedenen Ländern. Sie lernen Grammatik, sprechen viel und machen Übungen.", vocabulary:[{de:"Stattfinden",ru:"Проходить / Состояться"},{de:"Zweimal pro Woche",ru:"Дважды в неделю"},{de:"Verschiedene Länder",ru:"Разные страны"},{de:"Die Übung",ru:"Упражнение"}], questions:[{question:"An welchen Tagen findet der Kurs statt?",options:["Dienstags und donnerstags","Montags und mittwochs","Samstags und sonntags"],correct:1},{question:"Wie viele Personen sind in der Gruppe?",options:["10 Personen","12 Personen","15 Personen"],correct:1},{question:"Wann beginnt der Unterricht?",options:["Um 17 Uhr","Um 18 Uhr","Um 19 Uhr"],correct:1}] },
+  { id:"a1_8", level:"A1", title:"Ein Ausflug nach Köln", text:"Am Sonntag machen Klara und Tim einen Ausflug nach Köln. Sie fahren mit dem Zug. Die Fahrt dauert nur eine Stunde. In Köln besuchen sie den berühmten Kölner Dom. Danach gehen sie am Rhein spazieren und trinken ein traditionelles Kölsch-Bier. Der Tag war toll!", vocabulary:[{de:"Der Ausflug",ru:"Экскурсия / Поездка"},{de:"Der Zug",ru:"Поезд"},{de:"Berühmt",ru:"Знаменитый"},{de:"Dauern",ru:"Длиться"}], questions:[{question:"Womit fahren Klara und Tim nach Köln?",options:["Mit dem Bus","Mit dem Auto","Mit dem Zug"],correct:2},{question:"Wie lange dauert die Fahrt?",options:["30 Minuten","Eine Stunde","Zwei Stunden"],correct:1},{question:"Welche Sehenswürdigkeit besuchen sie?",options:["Den Kölner Dom","Das Brandenburger Tor","Das Schloss Neuschwanstein"],correct:0}] },
+  { id:"a1_9", level:"A1", title:"Die Jahreszeiten", text:"Das Jahr hat vier Jahreszeiten: Frühling, Sommer, Herbst und Winter. Im Frühling blühen die Blumen. Der Sommer ist heiß und ideal für Urlaub. Im Herbst werden die Blätter bunt und fallen von den Bäumen. Im Winter schneit es oft und man kann einen Schneemann bauen.", vocabulary:[{de:"Die Jahreszeit",ru:"Время года"},{de:"Blühen",ru:"Цвести"},{de:"Die Blätter",ru:"Листья"},{de:"Der Schneemann",ru:"Снеговик"}], questions:[{question:"Wie viele Jahreszeiten hat das Jahr?",options:["Drei","Vier","Fünf"],correct:1},{question:"Was passiert im Frühling?",options:["Die Blumen blühen","Es schneit","Die Blätter fallen"],correct:0},{question:"Was kann man im Winter bauen?",options:["Ein Haus","Eine Sandburg","Einen Schneemann"],correct:2}] },
+  { id:"a1_10", level:"A1", title:"Postkarte aus dem Urlaub", text:"Liebe Sarah, viele Grüße aus Italien! Das Wetter ist wunderbar, die Sonne scheint jeden Tag. Das Meer ist warm und blau. Das Essen hier ist super — ich esse jeden Tag Pizza und Eis! Morgen machen wir einen Ausflug nach Rom. Bis bald, deine Julia.", vocabulary:[{de:"Viele Grüße",ru:"Большой привет"},{de:"Wunderbar",ru:"Замечательный"},{de:"Das Meer",ru:"Море"},{de:"Bis bald",ru:"До скорого"}], questions:[{question:"Woher schickt Julia die Postkarte?",options:["Aus Spanien","Aus Italien","Aus Frankreich"],correct:1},{question:"Was isst Julia jeden Tag?",options:["Pasta und Suppe","Pizza und Eis","Fisch und Fleisch"],correct:1},{question:"Wohin fahren sie morgen?",options:["Nach Mailand","Nach Venedig","Nach Rom"],correct:2}] },
+
+  // --- A2 (Goethe / telc A2 Format) ---
+  { id:"a2_1", level:"A2", title:"E-Mail von einer Freundin (Umzug)", text:"Liebe Sarah, wie du weißt, ziehe ich nächste Woche um. Meine neue Wohnung ist sehr schön, aber ich habe ein Problem: Ich schaffe den Umzug nicht alleine. Hast du am Samstag Zeit? Mein Bruder hilft mir auch und fährt den Transporter. Wir fangen um 9 Uhr morgens an. Später wollen wir zusammen Pizza bestellen und etwas trinken. Gib mir bitte bescheid! Deine Klara", vocabulary:[{de:"umziehen",ru:"переезжать"},{de:"alleine schaffen",ru:"справиться самому"},{de:"der Transporter",ru:"грузовой фургон"},{de:"bescheid geben",ru:"дать знать / ответить"}], questions:[{question:"Klara braucht Hilfe beim Umzug.",options:["Richtig","Falsch"],correct:0},{question:"Wer fährt den Transporter?",options:["Klara","Sarah","Klaras Bruder"],correct:2},{question:"Was machen sie nach dem Umzug?",options:["Sie gehen ins Restaurant","Sie essen gemeinsam Pizza","Sie kaufen Möbel"],correct:1}] },
+  { id:"a2_2", level:"A2", title:"Anzeige: Schwarzes Brett", text:"Verkaufe mein altes Herrenfahrrad (28 Zoll). Es ist drei Jahre alt, aber in sehr gutem Zustand. Neue Reifen und Kette wurden vor einem Monat montiert. Farbe: Blau. Preis: 120 Euro (Festpreis). Nur Abholung in Berlin-Neukölln. Bei Interesse bitte anrufen unter: 0176-4538291.", vocabulary:[{de:"das Schwarze Brett",ru:"доска объявлений"},{de:"der Zustand",ru:"состояние"},{de:"die Reifen",ru:"шины / покрышки"},{de:"nur Abholung",ru:"только самовывоз"}], questions:[{question:"Das Fahrrad ist nagelneu.",options:["Richtig","Falsch"],correct:1},{question:"Was kostet das Fahrrad?",options:["100 Euro","120 Euro","Der Preis ist verhandelbar"],correct:1},{question:"Wie kann man das Fahrrad bekommen?",options:["Man muss es selbst abholen","Der Verkäufer bringt es per Post","Man muss es in Berlin-Mitte abholen"],correct:0}] },
+  { id:"a2_3", level:"A2", title:"Einladung: Abschiedsfeier", text:"Liebe Kolleginnen und Kollegen, unser Kollege Herr Müller geht Ende des Monats in den Ruhestand. Aus diesem Anlass möchten wir eine kleine Abschiedsfeier im Konferenzraum 2 organisieren. Die Feier findet am Donnerstag, den 15. Oktober, ab 15:00 Uhr statt. Für Kuchen und Getränke ist gesorgt. Wer möchte, kann sich an dem Geschenk beteiligen (bitte bei Frau Schmidt melden).", vocabulary:[{de:"in den Ruhestand gehen",ru:"выходить на пенсию"},{de:"die Abschiedsfeier",ru:"прощальная вечеринка"},{de:"für etwas ist gesorgt",ru:"о чем-то позаботились"},{de:"sich beteiligen",ru:"принимать участие / скидываться"}], questions:[{question:"Warum gibt es eine Feier?",options:["Herr Müller hat Geburtstag","Herr Müller verlässt die Firma wegen Rente","Die Firma feiert ein Jubiläum"],correct:1},{question:"Wann beginnt die Feier?",options:["Um 15:00 Uhr","Am Freitagabend","Ende November"],correct:0},{question:"Wo meldet man sich für das Geschenk?",options:["Bei Herrn Müller","Beim Chef","Bei Frau Schmidt"],correct:2}] },
+  { id:"a2_4", level:"A2", title:"Veranstaltungstipp: Straßenfest", text:"Am kommenden Wochenende findet wieder das beliebte Altstadtfest statt! Auf drei Bühnen gibt es Live-Musik von Rock bis Jazz. Für Kinder gibt es ein großes Spielprogramm mit Hüpfburg und Kinderschminken. Essenstände bieten Spezialitäten aus aller Welt an. Der Eintritt ist frei. Zeiten: Samstag 12–23 Uhr, Sonntag 11–20 Uhr.", vocabulary:[{de:"das Altstadtfest",ru:"праздник старого города"},{de:"die Hüpfburg",ru:"надувной батут"},{de:"das Kinderschminken",ru:"аквагрим для детей"},{de:"der Eintritt ist frei",ru:"вход бесплатный"}], questions:[{question:"Wie viel kostet ein Ticket für das Fest?",options:["5 Euro","10 Euro","Es kostet nichts"],correct:2},{question:"Was gibt es für Kinder?",options:["Ein Kino","Eine Hüpfburg","Einen Tanzkurs"],correct:1},{question:"Bis wie viel Uhr geht das Fest am Sonntag?",options:["Bis 20 Uhr","Bis 23 Uhr","Die ganze Nacht"],correct:0}] },
+  { id:"a2_5", level:"A2", title:"Info: Verkehrsbetriebe (U-Bahn)", text:"Wegen Bauarbeiten fährt die U-Bahn-Linie U2 vom 10. bis 20. August nicht zwischen Hauptbahnhof und Westkreuz. Als Ersatz fahren Busse (Schienenersatzverkehr SEV). Die Busse halten direkt an den gewohnten U-Bahn-Stationen. Bitte planen Sie für Ihre Fahrt etwa 15 Minuten mehr Zeit ein. Wir bitten um Ihr Verständnis.", vocabulary:[{de:"die Bauarbeiten",ru:"ремонтные работы"},{de:"der Schienenersatzverkehr",ru:"автобусы вместо поездов/метро"},{de:"einplanen",ru:"закладывать (время)"},{de:"das Verständnis",ru:"понимание"}], questions:[{question:"Die Linie U2 fährt im August wie gewohnt.",options:["Richtig","Falsch"],correct:1},{question:"Womit kann man statt der U-Bahn fahren?",options:["Mit dem Taxi","Mit Ersatzbussen","Gar nicht"],correct:1},{question:"Wie viel mehr Zeit braucht man ungefähr?",options:["5 Minuten","15 Minuten","Eine Stunde"],correct:1}] },
+  { id:"a2_6", level:"A2", title:"Anrufbeantworter-Nachricht", text:"Hallo Thomas, hier ist Jan. Ich wollte mich kurz wegen unseres Treffens heute Abend melden. Ich schaffe es leider nicht bis 18 Uhr, weil mein Zug Verspätung hat. Können wir uns um 19:30 Uhr vor dem Kino treffen? Ich habe die Karten schon online gekauft. Ruf mich an, wenn du das hörst!", vocabulary:[{de:"der Anrufbeantworter",ru:"автоответчик"},{de:"Verspätung haben",ru:"опаздывать (о транспорте)"},{de:"online kaufen",ru:"покупать онлайн"}], questions:[{question:"Warum kommt Jan später?",options:["Er muss arbeiten","Sein Zug ist verspätet","Er hat die Karten vergessen"],correct:1},{question:"Wann möchte sich Jan jetzt treffen?",options:["Um 18:00 Uhr","Um 19:00 Uhr","Um 19:30 Uhr"],correct:2},{question:"Hat Jan die Kinokarten bereits gekauft?",options:["Ja","Nein","Nur eine Karte"],correct:0}] },
+  { id:"a2_7", level:"A2", title:"Hausordnung: Ruhezeiten", text:"Sehr geehrte Mieterinnen und Mieter, aus gegebenem Anlass erinnern wir an die Einhaltung der Nachtruhe von 22:00 Uhr bis 06:00 Uhr morgens sowie an die Sonntagsruhe. In diesen Zeiten ist laute Musik, Heimwerken (Bohren, Hämmern) und das Betreiben von Waschmaschinen untersagt. Wir bitten um Rücksichtnahme auf Ihre Nachbarn.", vocabulary:[{de:"die Einhaltung",ru:"соблюдение"},{de:"die Nachtruhe",ru:"ночной покой"},{de:"untersagt sein",ru:"быть запрещенным"},{de:"die Rücksichtnahme",ru:"уважение / внимание к другим"}], questions:[{question:"Ab wann gilt die Nachtruhe im Haus?",options:["Ab 20:00 Uhr","Ab 22:00 Uhr","Ab 23:00 Uhr"],correct:1},{question:"Was darf man sonntags nicht machen?",options:["Kochen","Laut bohren oder hämmern","Schlafen"],correct:1},{question:"Gilt die Ruhezeit auch für Waschmaschinen?",options:["Ja","Nein","Nur im Keller"],correct:0}] },
+  { id:"a2_8", level:"A2", title:"Arztpraxis Dr. Weber", text:"Unsere Praxis bleibt vom 23. Dezember bis zum 2. Januar wegen Praxisurlaub geschlossen. In dringenden medizinischen Notfällen wenden Sie sich bitte an den ärztlichen Bereitschaftsdienst unter der Telefonnummer 116 117 oder an die Vertretungspraxis Dr. med. Hoffmann (Bahnhofstraße 12, Tel: 030-889900). Ab dem 3. Januar sind wir wie gewohnt für Sie da.", vocabulary:[{de:"geschlossen bleiben",ru:"оставаться закрытым"},{de:"der Notfall",ru:"экстренный случай"},{de:"der Bereitschaftsdienst",ru:"дежурная служба"},{de:"die Vertretungspraxis",ru:"замещающая клиника"}], questions:[{question:"Die Praxis Dr. Weber ist im Urlaub.",options:["Richtig","Falsch"],correct:0},{question:"Wer ist die Vertretung im Notfall?",options:["Dr. Müller","Dr. Hoffmann","Das Krankenhaus"],correct:1},{question:"Wann öffnet die Praxis Dr. Weber wieder?",options:["Am 23. Dezember","Am 2. Januar","Am 3. Januar"],correct:2}] },
+  { id:"a2_9", level:"A2", title:"Kurse im Sportverein", text:"Der Sportverein Aktiv e.V. bietet ab nächsten Monat neue Fitnesskurse an. Für Anfänger gibt es jeden Dienstag um 18 Uhr Yoga & Entspannung. Für alle, die mehr Schwitzen wollen, startet mittwochs um 19 Uhr ein Zumba-Workout. Eine Probestunde ist kostenlos. Voranmeldung auf unserer Website erforderlich!", vocabulary:[{de:"das Schwitzen",ru:"интенсивная нагрузка"},{de:"die Probestunde",ru:"пробное занятие"},{de:"kostenlos",ru:"бесплатно"},{de:"erforderlich",ru:"необходимо"}], questions:[{question:"Wann findet der Yoga-Kurs statt?",options:["Dienstags","Mittwochs","Samstags"],correct:0},{question:"Wie viel kostet das erste Probe-Training?",options:["10 Euro","Es ist gratis","5 Euro"],correct:1},{question:"Muss man sich vorher anmelden?",options:["Nein, man kommt einfach vorbei","Ja, online auf der Webseite","Nur telefonisch"],correct:1}] },
+  { id:"a2_10", level:"A2", title:"Stellenanzeige: Aushilfe", text:"Das Restaurant Bella Italia sucht ab sofort eine freundliche Aushilfe (m/w/d) für den Service am Wochenende (Freitagabend und Samstagabend). Vorkenntnisse im Gastronomiebereich sind von Vorteil, aber keine Pflicht. Wir bieten ein nettes Team und guten Stundenlohn. Bewerbungen bitte direkt im Restaurant abgeben.", vocabulary:[{de:"die Aushilfe",ru:"помощник / подработка"},{de:"Vorkenntnisse",ru:"опыт / знания"},{de:"von Vorteil",ru:"преимущество"},{de:"keine Pflicht",ru:"не обязательно"}], questions:[{question:"Wann soll man in dem Restaurant arbeiten?",options:["Unter der Woche","Am Wochenende","Nur sonntags"],correct:1},{question:"Braucht man unbedingt Erfahrung in der Gastronomie?",options:["Ja, ohne Erfahrung geht es nicht","Nein, es ist nicht zwingend nötig","Nur als Koch"],correct:1},{question:"Wie soll man sich bewerben?",options:["Per E-Mail","Telefonisch","Persönlich im Restaurant"],correct:2}] },
+
+  // --- B1 (Goethe / telc B1 Format) ---
+  { id:"b1_1", level:"B1", title:"Blogbeitrag: Digital Detox", text:"Letztes Wochenende habe ich ein Experiment gewagt: 48 Stunden komplett ohne mein Smartphone. Kein WhatsApp, kein Instagram, keine Nachrichten. Am Anfang war es extrem ungewohnt. Ich habe ständig in meine Tasche gegriffen, um das Handy zu suchen. Doch schon am Samstagnachmittag spürte ich eine unglaubliche Ruhe. Ich habe endlich wieder ein Buch gelesen und stundenlang mit einer Freundin im Park geredet, ohne auf den Bildschirm zu schauen. Mein Fazit: Das mache ich jetzt einmal im Monat!", vocabulary:[{de:"ein Experiment wagen",ru:"осмелиться на эксперимент"},{de:"ungewohnt",ru:"непривычно"},{de:"in die Tasche greifen",ru:"лезть в карман/сумку"},{de:"das Fazit",ru:"итог / вывод"}], questions:[{question:"Wie lange hat Claudia ihr Smartphone nicht benutzt?",options:["Einen Monat","Zwei Tage","Eine Woche"],correct:1},{question:"Wie fühlte sich Claudia am Samstagnachmittag?",options:["Gestresst und gelangweilt","Entspannt und ruhig","Einsam"],correct:1},{question:"Was plant Claudia für die Zukunft?",options:["Ihr Smartphone komplett zu verkaufen","Das Experiment jeden Monat zu wiederholen","Nie wieder Social Media zu nutzen"],correct:1}] },
+  { id:"b1_2", level:"B1", title:"Leserbrief: Homeoffice", text:"Sehr geehrte Redaktion, ich beziehe mich auf Ihren Artikel zum Thema Arbeiten von zu Hause. Seit zwei Jahren arbeite ich drei Tage pro Woche im Homeoffice. Einerseits schätze ich die Flexibilität und spare viel Zeit, weil der Arbeitsweg wegfällt. Andererseits fällt es mir oft schwer, Feierabend zu machen. Die Grenze zwischen Arbeit und Privatleben verschwimmt leicht. Zudem vermisse ich den persönlichen Austausch mit den Kollegen in der Kaffeepause. Homeoffice ist gut, aber eine gesunde Mischung bleibt für mich die beste Lösung.", vocabulary:[{de:"schätzen",ru:"ценить"},{de:"der Arbeitsweg fällt weg",ru:"дорога на работу отсутствует"},{de:"Feierabend machen",ru:"заканчивать рабочий день"},{de:"verschwimmen",ru:"размываться"}], questions:[{question:"Marcus arbeitet jeden Tag von zu Hause aus.",options:["Richtig","Falsch"],correct:1},{question:"Was sieht Marcus als Vorteil des Homeoffice?",options:["Mehr Gehalt","Keine Fahrzeiten zur Arbeit","Bessere Karrierechancen"],correct:1},{question:"Was ist laut Marcus ein Nachteil?",options:["Man muss zu viel telefonieren","Die Trennung von Arbeit und Freizeit ist schwieriger","Man hat keine Arbeit mehr"],correct:1}] },
+  { id:"b1_3", level:"B1", title:"Artikel: Das Fahrrad-Abo", text:"Immer mehr Städter verzichten auf ein eigenes Auto oder Fahrrad und nutzen Abo-Modelle. Für einen monatlichen Festbetrag erhält man ein hochwertiges Fahrrad inklusive Reparatur-Service. Geht etwas kaputt, wird das Rad innerhalb von 24 Stunden repariert oder ausgetauscht. Studien zeigen, dass besonders junge Erwachsene dieses Angebot nutzen, da sie flexibel bleiben wollen und sich nicht um Wartungskosten kümmern möchten.", vocabulary:[{de:"auf etwas verzichten",ru:"отказываться от чего-либо"},{de:"der Festbetrag",ru:"фиксированная сумма"},{de:"hochwertig",ru:"качественный"},{de:"die Wartungskosten",ru:"расходы на обслуживание"}], questions:[{question:"Bei einem Fahrrad-Abo ist die Reparatur im Preis enthalten.",options:["Richtig","Falsch"],correct:0},{question:"Was passiert, wenn das Fahrrad kaputtgeht?",options:["Man muss die Reparatur selbst bezahlen","Es wird schnell repariert oder ersetzt","Der Vertrag endet sofort"],correct:1},{question:"Warum ist das Abo besonders bei jungen Leuten beliebt?",options:["Weil Autos in Städten verboten sind","Weil sie keine Verantwortung für Reparaturen wollen","Weil es billiger als eine Busfahrkarte ist"],correct:1}] },
+  { id:"b1_4", level:"B1", title:"Beschwerde-E-Mail: Hotel", text:"Sehr geehrte Damen und Herren, ich habe vom 10. bis 15. Juli in Ihrem Hotel Ostsee-Traum ein Doppelzimmer mit Meerblick gebucht. Leider entsprach der Aufenthalt überhaupt nicht meinen Erwartungen. Das Zimmer blickte auf eine Baustelle statt auf das Meer, und von 7:00 Uhr morgens an war es extrem laut. Zudem war die Klimaanlage defekt. Auf meine Beschwerden an der Rezeption wurde nicht reagiert. Ich fordere daher eine Rückerstattung von 30 % des Gesamtpreises.", vocabulary:[{de:"den Erwartungen entsprechen",ru:"соответствовать ожиданиям"},{de:"die Baustelle",ru:"стройка"},{de:"defekt",ru:"неисправный"},{de:"die Rückerstattung",ru:"возврат денег"}], questions:[{question:"Frau Lehmann war mit dem Hotelzimmer sehr zufrieden.",options:["Richtig","Falsch"],correct:1},{question:"Was war das Problem mit dem Zimmer?",options:["Es gab kein Bett","Man hatte Sicht auf eine Baustelle und Lärm","Es war kein WLAN vorhanden"],correct:1},{question:"Was fordert Frau Lehmann?",options:["Einen Gutschein für das nächste Jahr","Eine Entschuldigung des Direktors","Einen Teil ihres Geldes zurück"],correct:2}] },
+  { id:"b1_5", level:"B1", title:"Ratgeber: Besser schlafen", text:"Schlafstörungen sind in unserer modernen Gesellschaft weit verbreitet. Experten raten dazu, eine feste Schlafroutine zu entwickeln. Gehen Sie möglichst immer zur gleichen Zeit ins Bett und stehen Sie zur gleichen Zeit auf – auch am Wochenende. Vermeiden Sie schwere Mahlzeiten und den Blick auf Smartphones mindestens eine Stunde vor dem Schlafengehen. Das blaue Licht der Displays hemmt die Produktion des Schlafhormons Melatonin und hält das Gehirn aktiv.", vocabulary:[{de:"die Schlafstörung",ru:"расстройство сна"},{de:"weit verbreitet",ru:"широко распространенный"},{de:"hemmen",ru:"тормозить / замедлять"},{de:"das Gehirn",ru:"мозг"}], questions:[{question:"Sollte man am Wochenende zu völlig anderen Zeiten schlafen?",options:["Ja, um sich zu erholen","Nein, regelmäßige Zeiten sind besser","Das spielt keine Rolle"],correct:1},{question:"Warum sollte man vor dem Schlafen nicht aufs Smartphone schauen?",options:["Weil man sonst traurige Nachrichten liest","Weil das Displaylicht das Einschlafen erschwert","Weil der Akku nachts laden muss"],correct:1},{question:"Welcher Rat wird im Text bezüglich des Essens gegeben?",options:["Vor dem Schlafen viel essen","Keine schweren Gerichte am späten Abend essen","Nur Nüsse essen"],correct:1}] },
+  { id:"b1_6", level:"B1", title:"Firmennachricht: Mülltrennung", text:"Liebe Mitarbeiterinnen und Mitarbeiter, aus aktuellem Anlass möchten wir Sie dringend bitten, die Mülltrennung in den Teeküchen einzuhalten. In letzter Zeit wurde immer wieder Plastik im Papiermüll gefunden. Das führt zu höheren Entsorgungskosten für unser Unternehmen und widerspricht unseren Umweltzielen. Bitte nutzen Sie die gelben Behälter für Plastikverpackungen, den blauen Eimer für Papier und den grauen für Restmüll.", vocabulary:[{de:"die Mülltrennung",ru:"сортировка мусора"},{de:"die Teeküche",ru:"мини-кухня в офисе"},{de:"die Entsorgungskosten",ru:"расходы на утилизацию"},{de:"widersprechen",ru:"противоречить"}], questions:[{question:"Warum schreibt das Gebäudemanagement diese Nachricht?",options:["Der Müll wurde nicht richtig getrennt","Die Teeküche wird renoviert","Es gibt keinen Müll mehr"],correct:0},{question:"Welche Farbe hat der Behälter für Papiermüll?",options:["Gelb","Grau","Blau"],correct:2},{question:"Was passiert durch falsche Mülltrennung?",options:["Die Firma muss mehr Geld bezahlen","Die Mitarbeiter bekommen Abmahnungen","Die Küche wird geschlossen"],correct:0}] },
+  { id:"b1_7", level:"B1", title:"Kulturbericht: Museumsnacht", text:"Nächsten Samstag öffnen über 40 Museen und Galerieräume ihre Türen für die traditionelle Lange Nacht der Museen. Von 18:00 bis 02:00 Uhr morgens erwartet die Besucher ein vielfältiges Programm aus Sonderausstellungen, Führungen und Musik-Performances. Ein einziges Ticket gilt für alle Teilnehmenden Museen und berechtigt gleichzeitig zur kostenlosen Nutzung der Shuttle-Busse, die zwischen den Orten pendeln.", vocabulary:[{de:"die Führung",ru:"экскурсия"},{de:"berechtigen",ru:"давать право"},{de:"der Shuttle-Bus",ru:"трансферный автобус"},{de:"pendeln",ru:"курсировать туда-обратно"}], questions:[{question:"Wie lange dauert die Museumsnacht?",options:["Bis Mitternacht","Bis 02:00 Uhr nachts","Das ganze Wochenende"],correct:1},{question:"Braucht man für jedes Museum ein eigenes Ticket?",options:["Ja","Nein, ein Ticket gilt überall","Der Eintritt ist komplett frei"],correct:1},{question:"Wie kommt man von einem Museum zum anderen?",options:["Man muss ein Taxi rufen","Mit speziellen Shuttle-Bussen","Nur zu Fuß"],correct:1}] },
+  { id:"b1_8", level:"B1", title:"Ehrenamtliches Engagement", text:"Fast 40 Prozent der Menschen in Deutschland engagieren sich ehrenamtlich, das heißt, sie arbeiten in ihrer Freizeit freiwillig und ohne Bezahlung für einen guten Zweck. Besonders beliebt sind Tätigkeiten im Sportverein, beim Rettungsdienst oder in der Seniorenbetreuung. Viele Befragte geben an, dass sie durch das Ehrenamt neue Fähigkeiten lernen, soziale Kontakte knüpfen und ein gutes Gefühl haben, der Gesellschaft etwas zurückzugeben.", vocabulary:[{de:"ehrenamtlich",ru:"волонтерский (без оплаты)"},{de:"freiwillig",ru:"добровольно"},{de:"ohne Bezahlung",ru:"без оплаты"},{de:"Kontakte knüpfen",ru:"заводить знакомства"}], questions:[{question:"Was bedeutet ehrenamtlich?",options:["Man arbeitet sehr viel für wenig Geld","Man hilft freiwillig ohne Geld zu bekommen","Man ist Politiker"],correct:1},{question:"Welcher Bereich wird im Text NICHT als beliebt genannt?",options:["Sportverein","Seniorenbetreuung","Bankwesen"],correct:2},{question:"Warum engagieren sich Menschen ehrenamtlich?",options:["Um neue Kontakte zu knüpfen und zu helfen","Um Steuern zu sparen","Weil es Pflicht ist"],correct:0}] },
+ { id:"b1_9", level:"B1", title:"Bank-Info: Online-Banking", text:"Sehr geehrte Kundinnen und Kunden, ab dem 1. November ändern wir unser Sicherheitsverfahren für das Online-Banking. Die bisherigen TAN-Listen auf Papier sind ab diesem Zeitpunkt nicht mehr gültig. Bitte installieren Sie bis zum 31. Oktober unsere neue App SecureLogin auf Ihrem Smartphone. Mit dieser App können Sie Überweisungen schnell und sicher per Fingerabdruck oder Gesichtserkennung freigeben. Bei Fragen steht Ihnen unser Support-Team rund um die Uhr zur Verfügung.", vocabulary:[{de:"das Verfahren",ru:"метод / процедура"},{de:"gültig",ru:"действительный"},{de:"die Überweisung",ru:"денежный перевод"},{de:"freigeben",ru:"подтверждать"}], questions:[{question:"TAN-Listen auf Papier kann man auch im Dezember noch nutzen.",options:["Richtig","Falsch"],correct:1},{question:"Was müssen Kunden bis Ende Oktober tun?",options:["Zur Bankfiliale gehen","Eine neue Sicherheits-App installieren","Ihre Kreditkarte wechseln"],correct:1},{question:"Wie gibt man Überweisungen in der neuen App frei?",options:["Mit einem schriftlichen Code per Post","Per Fingerabdruck oder Gesichtserkennung","Per Anruf bei der Bank"],correct:1}] },
+  { id:"b1_10", level:"B1", title:"Trend: Tiny Houses", text:"Immer mehr Menschen entscheiden sich bewusst für das Leben auf kleinem Raum. Sogenannte Tiny Houses – winzige Häuser mit oft nur 15 bis 30 Quadratmetern Wohnfläche – werden immer beliebter. Die Besitzer schätzen nicht nur die geringen Baukosten und den niedrigen Energieverbrauch, sondern auch die Reduzierung auf das Wesentliche. Wer wenig Platz hat, kauft weniger unnötige Dinge und lebt oft stressfreier. Allerdings stellt das Leben auf engem Raum Paare vor Herausforderungen.", vocabulary:[{de:"bewusst",ru:"осознанно"},{de:"die Wohnfläche",ru:"жилая площадь"},{de:"das Wesentliche",ru:"самое главное"},{de:"die Herausforderung",ru:"трудность / вызов"}], questions:[{question:"Wie groß ist ein typisches Tiny House?",options:["Über 100 Quadratmeter","Zwischen 15 und 30 Quadratmetern","5 Quadratmeter"],correct:1},{question:"Was ist ein Vorteil von Tiny Houses?",options:["Geringe Kosten und weniger Stress durch weniger Besitz","Man kann unendlich viele Dinge kaufen","Sie sind kostenlos"],correct:0},{question:"Für wen kann das Leben im Tiny House laut Text schwierig sein?",options:["Für Einzelpersonen","Für Paare","Für Haustiere"],correct:1}] },
+  
+  
+  { id:"b2_1", level:"B2", title:"Meinungsbeitrag: Künstliche Intelligenz am Arbeitsplatz", text:"Die voranschreitende Digitalisierung und der Einsatz künstlicher Intelligenz (KI) verändern die Arbeitswelt grundlegend. Während Befürworter betonen, dass Routineaufgaben effizienter erledigt werden können und somit mehr Zeit für kreative Tätigkeiten bleibt, befürchten Kritiker den massiven Verlust von Arbeitsplätzen. Studien zeigen jedoch, dass KI in vielen Bereichen eher als Unterstützung denn als vollständiger Ersatz für menschliche Arbeitskraft dient. Entscheidend ist, dass Arbeitnehmer kontinuierlich weitergebildet werden, um den neuen technologischen Anforderungen gewachsen zu sein.", vocabulary:[{de:"voranschreitend",ru:"прогрессирующий / продвигающийся"},{de:"grundlegend verändern",ru:"в корнях/коренным образом менять"},{de:"der Befürworter",ru:"сторонник"},{de:"gewachsen sein",ru:"быть в состоянии справиться / соответствовать"}], questions:[{question:"Welche Meinung vertritt der Autor bezüglich der Rolle von KI?",options:["Sie wird in Kürze alle menschlichen Arbeitskräfte ersetzen.","Sie dient primär als Unterstützung und erfordert Fortbildung.","Sie führt ausschließlich zum Verlust von Arbeitsplätzen."],correct:1},{question:"Was sehen Kritiker als Hauptgefahr der KI?",options:["Den Abbau von Arbeitsstellen.","Den Mangel an kreativen Aufgaben.","Die hohen Kosten für Fortbildungen."],correct:0},{question:"Befürworter argumentieren, dass KI Zeit für kreative Arbeiten schafft.",options:["Richtig","Falsch"],correct:0}] },
+  { id:"b2_2", level:"B2", title:"Artikel: Das Phänomen des 'Work-Life-Blending'", text:"Immer mehr Unternehmen verabschieden sich von der strikten Trennung zwischen Arbeit und Freizeit und setzen stattdessen auf das sogenannte Work-Life-Blending. Hierbei verschmelzen Beruf und Privatleben fließend: Mitarbeiter beantworten abends E-Mails, erledigen dafür aber nachmittags private Besorgungen. Obwohl dieses Modell hohe Flexibilität bietet, warnen Psychologen vor einer dauerhaften Überlastung. Ohne klare Grenzen fällt es vielen Menschen schwer, abzuschalten, was langfristig das Risiko für ein Burnout-Syndrom erhöht.", vocabulary:[{de:"sich verabschieden von",ru:"отказываться от чего-либо"},{de:"verschmelzen",ru:"сливаться / смешиваться"},{de:"die Überlastung",ru:"перегрузка"},{de:"abschalten",ru:"отключаться / отдыхать"}], questions:[{question:"Was zeichnet das 'Work-Life-Blending' aus?",options:["Eine strikte Einhaltung der Arbeitszeiten.","Ein fließender Übergang zwischen Arbeit und Privatem.","Das Verbot von privaten Telefonaten am Arbeitsplatz."],correct:1},{question:"Welches Risiko sehen Experten bei diesem Modell?",options:["Dass Mitarbeiter weniger produktiv arbeiten.","Dass durch fehlende Abgrenzung Burnout entstehen kann.","Dass die Kommunikation im Team leidet."],correct:1},{question:"Beim Work-Life-Blending darf man nachmittags keine privaten Dinge erledigen.",options:["Richtig","Falsch"],correct:1}] },
+  { id:"b2_4", level:"B2", title:"Wissenschaftsbericht: Die Bedeutung von Schlaf für das Lernen", text:"Dass ausreichender Schlaf wichtig für das Wohlbefinden ist, ist allgemein bekannt. Neuere Neurowissenschaftliche Studien belegen jedoch, wie entscheidend der Tiefschlaf für die Festigung von gelerntem Wissen ist. Während wir schlafen, verarbeitet das Gehirn die am Tag aufgenommenen Informationen und überträgt sie vom Kurzzeit- in das Langzeitgedächtnis. Wer vor Prüfungen die Nacht durchlernt, erreicht daher oft das Gegenteil des Gewünschten: Das Gehirn kann die Daten mangels Erholungsphasen nicht nachhaltig speichern.", vocabulary:[{de:"das Wohlbefinden",ru:"самочувствие / благополучие"},{de:"die Festigung",ru:"закрепление"},{de:"die Nacht durchlernen",ru:"учить всю ночь напролет"},{de:"nachhaltig speichern",ru:"долговременно / надежно сохранять"}], questions:[{question:"Was passiert laut Artikel während des Tiefschlafs?",options:["Das Gehirn löscht alte Erinnerungen komplett.","Informationen wandern ins Langzeitgedächtnis.","Das Gehirn stellt die Verarbeitung von Reizen ein."],correct:1},{question:"Warum ist es unklug, vor einer Prüfung nicht zu schlafen?",options:["Weil man während der Prüfung einschläft.","Weil das Gehirn Wissen ohne Schlaf nicht effektiv sichern kann.","Weil man die Konzentration nach 22 Uhr verliert."],correct:1},{question:"Kurzzeit- und Langzeitgedächtnis arbeiten völlig unabhängig vom Schlaf.",options:["Richtig","Falsch"],correct:1}] },
+  { id:"b2_5", level:"B2", title:"Debatte: Fast Fashion und Nachhaltigkeit", text:"Die Fast-Fashion-Industrie bringt wöchentlich neue Kollektionen zu Spottpreisen auf den Markt. Dies führt zu einem dramatischen Anstieg des Textilkonsums – mit verheerenden Folgen für Umwelt und globale Arbeitsbedingungen. Umweltorganisationen fordern daher ein Umdenken bei Konsumenten und Gesetzgebern. Durch den Kauf von Secondhand-Kleidung, die Nutzung von Kleidertauschbörsen oder die Entscheidung für nachhaltig produzierte Mode kann jeder Einzelne einen Beitrag leisten, um der Verschwendung entgegenzuwirken.", vocabulary:[{de:"der Spottpreis",ru:"смешная / мизерная цена"},{de:"verheerend",ru:"разрушительный / опустошительный"},{de:"das Umdenken",ru:"переосмысление"},{de:"entgegenwirken",ru:"противодействовать"}], questions:[{question:"Was kritisiert der Text an der Fast-Fashion-Industrie?",options:["Die mangelnde Vielfalt an Kleidung.","Die negativen Auswirkungen auf Umwelt und Arbeitskräfte.","Die zu hohen Preise für Markenkleidung."],correct:1},{question:"Welche Alternative zur Neuware wird im Text genannt?",options:["Kleidung selbst zu nähen.","Secondhand-Kleidung und Kleidertausch.","Kleidung im Ausland zu bestellen."],correct:1},{question:"Der Anstieg des Kleidungs-Konsums hat laut Text kaum globale Folgen.",options:["Richtig","Falsch"],correct:1}] },
+  { id:"b2_6", level:"B2", title:"Unternehmensmitteilung: Umstellung auf papierloses Büro", text:"An alle Mitarbeiterinnen und Mitarbeiter: Im Rahmen unserer neuen Nachhaltigkeitsstrategie stellen wir ab nächstem Monat schrittweise auf ein papierloses Büro um. Alle Dokumente und Kundenakten werden künftig ausschließlich digital verwaltet und archiviert. Rechnungsfreigaben erfolgen ab sofort über das neue Intranet-Portal. Wir bitten alle Abteilungen, vorhandene Papierunterlagen bis zum Monatsende einzuscannen und sachgerecht zu entsorgen. Schulungen zur neuen Software finden nächste Woche statt.", vocabulary:[{de:"im Rahmen (+ Gen.)",ru:"в рамках чего-либо"},{de:"künftig",ru:"в будущем / отныне"},{de:"sachgerecht entsorgen",ru:"утилизировать надлежащим образом"},{de:"die Freigabe",ru:"утверждение / одобрение"}], questions:[{question:"Ziel der neuen Unternehmensstrategie ist...",options:["die Schließung des physischen Büros.","die Reduzierung des Papierverbrauchs durch Digitalisierung.","die Anschaffung neuer Drucker."],correct:1},{question:"Was müssen die Mitarbeiter mit alten Papieren tun?",options:["Sie im Archiv aufbewahren.","Sie einscannen und ordnungsgemäß entsorgen.","Sie an die Kunden zurückschicken."],correct:1},{question:"Die Schulungen für die neue Software sind optional und erst im nächsten Jahr geplant.",options:["Richtig","Falsch"],correct:1}] },
+  { id:"b2_7", level:"B2", title:"Kulturkritik: Der Trend zum Streamen von Kinofilmen", text:"Die Streaming-Dienste haben das Sehverhalten des Publikums revolutioniert. Immer mehr Filmpremieren finden nicht mehr im Lichtspielhaus statt, sondern direkt im Wohnzimmer der Zuschauer. Während Befürworter den Komfort und die Kostenersparnis loben, betrauern Filmkritiker den Verlust der einzigartigen Magie des Kinos. Das gemeinsame Erleben auf der großen Leinwand und die besondere Atmosphäre lassen sich durch einen Fernseher oder ein Tablet schlichtweg nicht ersetzen.", vocabulary:[{de:"das Sehverhalten",ru:"привычки просмотра"},{de:"betrauern",ru:"оплакивать / сожалеть о"},{de:"die Leinwand",ru:"экран (в кинотеатре)"},{de:"schlichtweg",ru:"попросту / попросту говоря"}], questions:[{question:"Welcher Wandel wird im Text beschrieben?",options:["Dass Kinokarten immer billiger werden.","Dass Streaming-Plattformen das klassische Kino verdrängen.","Dass Filme nur noch auf Tablets produziert werden."],correct:1},{question:"Was bemängeln Kritiker am Heimkino?",options:["Die schlechte Bildqualität.","Den Verlust des gemeinsamen Kinoerlebnisses und der Atmosphäre.","Die zu hohen Monatsgebühren."],correct:1},{question:"Ein Fernseher bietet laut Autor ein vollwertiges Ersatz-Erlebnis zum Kino.",options:["Richtig","Falsch"],correct:1}] },
+  { id:"b2_8", level:"B2", title:"Ratgeber: Souverän Verhandeln im Beruf", text:"Gehaltsverhandlungen gehören für viele Arbeitnehmer zu den unangenehmsten Aufgaben im Berufsleben. Der Schlüssel zum Erfolg liegt in der gründlichen Vorbereitung. Wer Vorgesetzte überzeugen will, sollte Argumente auf der Basis konkreter Erfolge und Projekte liefern, statt emotionale Gründe wie gestiegene Lebenshaltungskosten anzuführen. Zudem ist es ratsam, mit einem leicht überhöhten Angebot einzusteigen, um Verhandlungsspielraum zu haben, ohne dabei unrealistisch zu wirken.", vocabulary:[{de:"souverän",ru:"уверенно / превосходно"},{de:"anführen",ru:"приводить (в качестве аргумента)"},{de:"der Verhandlungsspielraum",ru:"пространство для маневра / торга"},{de:"überhöht",ru:"завышенный"}], questions:[{question:"Worauf sollte man sich bei Gehaltsverhandlungen stützen?",options:["Auf persönliche finanzielle Probleme.","Auf eigene berufliche Leistungen und Projekterfolge.","Auf die Gehälter anderer Kollegen."],correct:1},{question:"Warum sollte die erste Forderung etwas höher angesetzt sein?",options:["Um den Chef zu schockieren.","Um Platz für Kompromisse bei den Verhandlungen zu haben.","Weil man automatisch die Hälfte bekommt."],correct:1},{question:"Gestiegene Lebenshaltungskosten gelten als das beste Argument für mehr Gehalt.",options:["Richtig","Falsch"],correct:1}] },
+  { id:"b2_9", level:"B2", title:"Gesellschaftsreport: Ernährungsformen der Zukunft", text:"Der Trend zur pflanzlichen Ernährung hat längst die Mitte der Gesellschaft erreicht. Immer mehr Menschen bezeichnen sich als Flexitarier, die Fleisch nur noch selten und bewusst konsumieren. Neben gesundheitlichen Aspekten spielen ethische Bedenken hinsichtlich der Massentierhaltung sowie ökologische Gründe eine zentrale Rolle. Forscher arbeiten bereits intensiv an kultiviertem Fleisch aus dem Labor sowie an Insektenproteinen, um den globalen Eiweißbedarf nachhaltig zu decken.", vocabulary:[{de:"pflanzliche Ernährung",ru:"растительное питание"},{de:"ethische Bedenken",ru:"этические сомнения"},{de:"die Massentierhaltung",ru:"промышленное животноводство"},{de:"den Bedarf decken",ru:"покрывать потребность"}], questions:[{question:"Wer sind 'Flexitarier'?",options:["Menschen, die ausschließlich Fleisch essen.","Menschen, die auf Sport und Ernährung achten.","Menschen, die selten und bewusst Fleisch essen."],correct:2},{question:"An welchen Alternativen forschen Wissenschaftler aktuell?",options:["An synthetischem Zucker.","An Laborfleisch und Insektenproteinen.","An künstlichen Vitaminen."],correct:1},{question:"Gesundheitliche Gründe sind das einzige Motiv für eine Ernährungsumstellung.",options:["Richtig","Falsch"],correct:1}] },
+  { id:"b2_10", level:"B2", title:"Anfrage bezüglich Kooperation und Sponsoring", text:"Sehr geehrte Frau Dr. Wagner, im Namen des Organisationsteams des regionalen Umweltforums möchten wir Sie anfragen, ob Ihr Unternehmen Interesse an einer Partnerschaft für unsere kommende Jahreskonferenz hat. Ziel der Veranstaltung ist es, innovative Nachhaltigkeitsprojekte vorzustellen. Als Sponsor hätten Sie die Möglichkeit, Ihr Unternehmen vor einem fachkundigen Publikum zu präsentieren. Gerne übersenden wir Ihnen detaillierte Unterlagen zu den verschiedenen Sponsoring-Paketen.", vocabulary:[{de:"bezüglich (+ Gen.)",ru:"относительно / касательно"},{de:"fachkundig",ru:"компетентный / знающий"},{de:"übersenden",ru:"пересылать / направлять"},{de:"die Partnerschaft",ru:"партнерство"}], questions:[{question:"Was ist das Ziel des Umweltforums?",options:["Neue Mitarbeiter einzustellen.","Projekte im Bereich Nachhaltigkeit zu präsentieren.","Ein neues Produkt zu verkaufen."],correct:1},{question:"Welchen Vorteil bietet die Partnerschaft dem Unternehmen?",options:["Präsentation vor einem Fachpublikum.","Kostenlose Werbung im Fernsehen.","Steuerliche Befreiungen."],correct:0},{question:"Die Sponsoring-Pakete wurden der E-Mail bereits fest beigefügt.",options:["Richtig","Falsch"],correct:1}] },
+];
+
+let currentLevel = 'A0';
+let currentIndex = 0;
+
+function setLevel(lvl) {
+  currentLevel = lvl;
+  currentIndex = 0;
+  document.querySelectorAll('.lvl-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.innerText.includes(lvl));
+  });
+  render();
+}
+
+function checkAnswer(btn, isCorrect, qIdx) {
+  const opts = btn.parentElement.querySelectorAll('.opt-btn');
+  opts.forEach(b => b.disabled = true);
+  if (isCorrect) {
+    btn.classList.add('correct');
+  } else {
+    btn.classList.add('wrong');
+  }
+}
+
+function render() {
+  const filtered = data.filter(d => d.level === currentLevel);
+  const item = filtered[currentIndex];
+  
+  if(!item) return;
+
+  const html = `
+    <div class="card-meta">
+      <span class="badge">${item.level} — Текст ${currentIndex + 1} из ${filtered.length}</span>
+    </div>
+    <h1>${item.title}</h1>
+    <div class="text-body">${item.text}</div>
+
+    <div class="vocab-box">
+      <div class="vocab-title">💡 Словарик к тексту:</div>
+      <div class="vocab-grid">
+        ${item.vocabulary.map(v => `<div class="vocab-item"><b>${v.de}</b> —${v.ru}</div>`).join('')}
+      </div>
+    </div>
+
+    <div class="quiz-section">
+      <div class="vocab-title">❓ Вопросы по тексту:</div>
+      ${item.questions.map((q, qIdx) => `
+        <div class="question-block">
+          <div class="q-text">${qIdx + 1}.${q.question}</div>
+          <div class="options">
+            ${q.options.map((opt, oIdx) => `
+              <button class="opt-btn" onclick="checkAnswer(this, ${oIdx === q.correct}, ${qIdx})">
+                ${opt}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="controls">
+      <button class="nav-btn" onclick="prevText()" ${currentIndex === 0 ? 'disabled' : ''}>← Назад</button>
+      <button class="nav-btn" onclick="nextText()" ${currentIndex === filtered.length - 1 ? 'disabled' : ''}>Вперед →</button>
+    </div>
+  `;
+
+  document.getElementById('app').innerHTML = html;
+}
+
+function prevText() {
+  if (currentIndex > 0) {
+    currentIndex--;
+    render();
+  }
+}
+
+function nextText() {
+  const filtered = data.filter(d => d.level === currentLevel);
+  if (currentIndex < filtered.length - 1) {
+    currentIndex++;
+    render();
+  }
+}
+
+// Старт при загрузке
+render();
+</script>
+</body>
+</html>

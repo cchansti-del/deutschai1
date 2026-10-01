@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeutschAI — Модуль 6: Рассказы с переводом</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1b1030;--paper:#fff3dc;--pink:#ff3d9a;--yellow:#ffd60a;--cyan:#22d3ee;--lime:#b8f03c;--violet:#8b5cf6;--orange:#ff7a1a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',system-ui,sans-serif;font-weight:700;color:var(--ink);background:var(--paper);
+ background-image:radial-gradient(rgba(27,16,48,.14) 1.3px,transparent 1.5px);background-size:26px 26px;min-height:100vh;padding-bottom:60px}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px}
+header{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+.back-btn{display:inline-flex;align-items:center;gap:6px;background:#fff;border:3px solid var(--ink);padding:8px 16px;border-radius:999px;font-weight:800;box-shadow:4px 4px 0 var(--ink);cursor:pointer}
+.title-area{margin:20px 0 30px}
+h1{font-family:'Unbounded';font-size:clamp(24px,4vw,38px);line-height:1.2}
+
+/* Фильтр уровней */
+.levels{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:30px}
+.lvl-btn{background:#fff;border:3px solid var(--ink);padding:8px 18px;border-radius:999px;font-family:'Unbounded';font-weight:800;cursor:pointer;box-shadow:3px 3px 0 var(--ink);transition:all .15s}
+.lvl-btn.active{background:var(--orange);color:#fff;transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink)}
+
+/* Инструкция */
+.hint{background:var(--lime);border:3px solid var(--ink);border-radius:16px;padding:12px 18px;margin-bottom:24px;box-shadow:4px 4px 0 var(--ink);display:flex;align-items:center;gap:10px;font-size:15px}
+
+/* Карточка текста */
+.story-card{background:#fff;border:4px solid var(--ink);border-radius:24px;padding:30px;box-shadow:8px 8px 0 var(--ink);position:relative}
+.story-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:3px solid var(--paper);padding-bottom:15px}
+.story-title{font-family:'Unbounded';font-size:20px}
+.story-badge{background:var(--yellow);border:2px solid var(--ink);padding:4px 12px;border-radius:999px;font-size:14px;font-weight:800}
+
+/* Текст и слова */
+.story-body{font-size:19px;line-height:1.8;color:#2c1c4d}
+.story-body p{margin-bottom:16px}
+.word{display:inline-block;cursor:pointer;padding:0 2px;border-radius:4px;transition:background .15s,color .15s}
+.word:hover{background:var(--cyan);color:var(--ink)}
+.word.active{background:var(--pink);color:#fff}
+
+/* Всплывающее окно перевода */
+.popover{position:absolute;background:var(--ink);color:#fff;padding:10px 16px;border-radius:14px;border:3px solid var(--yellow);box-shadow:0 10px 20px rgba(0,0,0,.25);z-index:100;display:none;transform:translate(-50%,-100%);margin-top:-10px;text-align:center}
+.popover::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);border-width:8px 8px 0;border-style:solid;border-color:var(--yellow) transparent}
+.popover-de{font-family:'Unbounded';font-size:15px;color:var(--yellow);margin-bottom:2px}
+.popover-ru{font-size:14px;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a href="../../index1.html" class="back-btn">← На главную</a>
+    <div style="font-family:'Unbounded';font-size:18px;">DeutschAI</div>
+  </header>
+
+  <div class="title-area">
+    <h1>Модуль 6: Рассказы с переводом ✨</h1>
+  </div>
+
+  <div class="hint">
+    <span>💡</span> <b>Совет:</b> Нажимай на любое слово в тексте, чтобы увидеть его перевод!
+  </div>
+
+  <div class="levels">
+    <button class="lvl-btn active" data-lvl="A0">A0 (Начальный)</button>
+    <button class="lvl-btn" data-lvl="A1">A1</button>
+    <button class="lvl-btn" data-lvl="A2">A2</button>
+    <button class="lvl-btn" data-lvl="B1">B1</button>
+    <button class="lvl-btn" data-lvl="B2">B2</button>
+  </div>
+
+  <div class="story-card">
+    <div class="story-header">
+      <div class="story-title" id="storyTitle">Загрузка...</div>
+      <div class="story-badge" id="storyLvl">A0</div>
+    </div>
+    <div class="story-body" id="storyBody"></div>
+  </div>
+</div>
+
+<div class="popover" id="popover">
+  <div class="popover-de" id="popDe">Wort</div>
+  <div class="popover-ru" id="popRu">слово</div>
+</div>
+
+<script>
+// Длинные тексты по уровням (каждый более 150 слов)
+const stories = {
+  "A0": {
+    title: "Märchen: Rotkäppchen (Красная Шапочка)",
+    paragraphs: [
+      "Rotkäppchen ist ein kleines Kind. Sie wohnt in einem Dorf. Rotkäppchen trägt immer ein rotes Käppchen. Die Mutter sagt: Rotkäppchen, geh zur Großmutter! Die Großmutter ist sehr krank. Hier ist ein Korb. Im Korb sind frisches Brot, ein Kuchen und eine Flasche Wein. Gehe direkt zur Großmutter und bleibe immer auf dem Weg!",
+      "Rotkäppchen geht in den Wald. Im Wald ist es dunkel. Da kommt ein Wolf. Der Wolf ist groß, grau und sehr hungrig. Der Wolf fragt freundlich: Hallo Rotkäppchen, wohin gehst du so früh? Rotkäppchen sagt: Ich gehe zur Großmutter. Sie wohnt im Wald. Der Wolf denkt: Das Kind schmeckt gut!",
+      "Der Wolf läuft schnell zum Haus der Großmutter. Er klopft an die Tür. Die Großmutter liegt im Bett. Der Wolf frisst die Großmutter. Dann zieht er ihre Kleidung an. Rotkäppchen kommt zum Haus. Sie sieht die Großmutter und staunt. Aber ein Jäger hört den Wolf. Der Jäger hilft Rotkäppchen und der Großmutter. Alle sind froh und glücklich."
+    ]
+  },
+  "A1": {
+    title: "Märchen: Die Bremer Stadtmusikanten (Бременские музыканты)",
+    text: "",
+    paragraphs: [
+      "Ein Mann hat einen Esel. Der Esel arbeitet seit vielen Jahren sehr hart. Er trägt schwere Säcke zur Mühle. Aber jetzt ist der Esel alt und müde. Der Esel kann nicht mehr schnell laufen. Der Besitzer will den Esel nicht mehr füttern. Da läuft der Esel weg. Er beschließt: Ich gehe nach Bremen. Dort kann ich ein Stadtmusikant werden!",
+      "Unterwegs trifft der Esel einen Hund. Der Hund liegt am Weg und keucht. Der Esel fragt: Warum keuchst du so, Freund? Der Hund antwortet: Ich bin alt und kann nicht mehr jagen. Mein Herr wollte mich schlagen. Der Esel sagt: Komm mit mir nach Bremen! Ich spiele die Laute und du schlägst die Trommel. Der Hund freut sich und geht mit.",
+      "Wenig später sehen sie eine Katze mit einem sehr traurigen Gesicht. Die Katze ist alt und mag keine Mäuse mehr fangen. Sie schließt sich den beiden an. Dann treffen die drei Tiere einen Hahn. Der Hahn kräht laut. Alle vier Tiere wandern zusammen nach Bremen, um Musik zu machen."
+    ]
+  },
+  "A2": {
+    title: "Reportage: Der Kölner Dom (Кёльнский собор)",
+    paragraphs: [
+      "Der Kölner Dom ist eine der bekanntesten und imposantesten Sehenswürdigkeiten in ganz Deutschland. Die gigantische gothische Kirche steht direkt im Zentrum der Stadt Köln, gleich neben dem Hauptbahnhof und am Ufer des Rheins. Täglich kommen Tausende Besucher aus aller Welt, um dieses architektonische Meisterwerk zu bewundern.",
+      "Der Bau des Doms begann bereits im Mittelalter im Jahr 1248. Allerdings gab es im Laufe der Jahrhunderte viele finanzielle und politische Probleme. Die Bauarbeiten wurden für mehr als dreihundert Jahre komplett unterbrochen. Erst im 19. Jahrhundert entschied man sich, die Kirche nach den originalen Plänen fertigzubauen. Im Jahr 1880 wurde das gewaltige Bauwerk schließlich offiziell vollendet.",
+      "Heute gehört der Kölner Dom zum UNESCO-Weltkulturerbe. Die zwei riesigen Türme sind über 157 Meter hoch. Mutige Besucher können die mehr als fünfhundert Stufen der Wendeltreppe steigen. Belohnt werden sie mit einer atemberaubenden Aussicht über die Stadt Köln und den Rhein."
+    ]
+  },
+  "B1": {
+    title: "Auszug: Die unendliche Geschichte (Бесконечная история)",
+    paragraphs: [
+      "Wer noch nie einen ganzen Nachmittag lang mit hochroten Wangen und gesträubtem Haar über einem Buch gesessen und die Welt um sich her vergessen hat, der wird wohl kaum verstehen können, was Bastian in diesem Augenblick erlebte. Er starrte auf den geheimnisvollen Titel des Buches und ihm wurde abwechselnd heiß und kalt. Das war es, wovon er schon seit Monaten geträumt hatte!",
+      "Das Buch war in seidenen Einband gebunden und schimmerte im schummerigen Licht der Dachkammer. Bastian wusste, dass er die Schule vorerst nicht verlassen konnte. Er setzte sich auf die alten Matratzen, zog seine Jacke enger um die Schultern und schlug vorsichtig die erste Seite auf. Die Buchstaben schienen förmlich zu leuchten.",
+      "Mit jedem Wort, das er las, versank er tiefer in eine fantastische Welt voller fabelhafter Wesen, majestätischer Wälder und namenloser Gefahren. Er fühlte sich nicht mehr wie ein kleiner, ängstlicher Junge, sondern wie ein mutiger Begleiter der Helden der Geschichte. Die Zeit schien für ihn vollständig stillzustehen."
+    ]
+  },
+  "B2": {
+    title: "Wissenschaftsbericht: Die Entdeckung des Penicillins (Открытие пенициллина)",
+    paragraphs: [
+      "Im Sommer des Jahres 1928 machte der schottische Bakteriologe Alexander Fleming in seinem Londoner Laboratorium eine Entdeckung, die die moderne Medizin grundlegend revolutionieren sollte. Vor dem Antritt seines Sommerurlaubs hatte Fleming verschiedene Staphylokokken-Kulturen in Petrischalen auf seinem Arbeitstisch zurückgelassen, ohne diese ordnungsgemäß zu reinigen oder zu verschließen.",
+      "Nach seiner Rückkehr bemerkte er bei der Inspektion der Schalen ein ungewöhnliches Phänomen: Auf einer der Bakterienkulturen hatte sich ein bläulicher Schimmelpilz gebildet. Zu seinem Erstaunen stellte Fleming fest, dass in der unmittelbaren Umgebung des Pilzes sämtliche Bakterien abgestorben waren. Der Pilz hatte offensichtlich eine Substanz abgesondert, die das Bakterienwachstum effektiv verhinderte.",
+      "Fleming isolierte den wirksamen Stoff und nannte ihn Penicillin. Obwohl die Reinflüssigkeit und die darauffolgende Massenproduktion erst Jahre später von weiteren Wissenschaftlern perfektioniert wurden, legte Flemings Zufallsbeobachtung den Grundstein für die Ära der Antibiotika. Diese medizinische Revolution hat bis heute unzählige Millionen Menschenleben weltweit gerettet."
+    ]
+  }
+};
+
+// Расширенный словарь перевода
+const dictionary = {
+  // Базовые слова
+  "ist": "есть", "ein": "один / какой-то", "kleines": "маленький", "kind": "ребенок", "sie": "она / они", "wohnt": "живет",
+  "in": "в", "einem": "одному", "dorf": "деревня", "trägt": "носит", "immer": "всегда", "rotes": "красную", "käppchen": "шапочку",
+  "die": "эта", "mutter": "мать", "sagt": "говорит", "geh": "иди", "zur": "к", "großmutter": "бабушка", "sehr": "очень",
+  "krank": "больная", "hier": "здесь", "korb": "корзина", "im": "в", "sind": "суть / есть", "frisches": "свежий",
+  "brot": "хлеb", "kuchen": "пирог", "und": "и", "flasche": "бутылка", "wein": "вино", "gehe": "иди", "direkt": "прямо",
+  "bleibe": "оставайся", "auf": "на", "dem": "этому", "weg": "путь", "geht": "идет", "wald": "лес", "dunkel": "темно",
+  "da": "тут / там", "kommt": "приходит", "wolf": "волк", "groß": "большой", "grau": "серый", "hungrig": "голодный",
+  "fragt": "спрашивает", "freundlich": "приветливо", "hallo": "привет", "wohin": "куда", "gehst": "идешь", "du": "ты",
+  "so": "так", "früh": "рано", "denkt": "думает", "das": "это", "schmeckt": "вкусный", "gut": "хорошо", "läuft": "бежит",
+  "schnell": "быстро", "zum": "к", "haus": "дом", "klopft": "стучит", "an": "в", "tür": "дверь", "liegt": "лежит",
+  "bett": "кровать", "frisst": "поедает", "zieht": "надевает", "ihre": "ее", "kleidung": "одежду", "sieht": "видит",
+  "staunt": "удивляется", "aber": "но", "jäger": "охотник", "hört": "слышит", "hilft": "помогает", "alle": "все",
+  "froh": "рады", "glücklich": "счастливы", "mann": "мужчина", "hat": "имеет", "esel": "осел", "arbeitet": "работает",
+  "seit": "с", "vielen": "многих", "jahren": "лет", "hart": "тяжело", "schwere": "тяжелые", "säcke": "мешки",
+  "mühle": "мельница", "jetzt": "сейчас", "alt": "старый", "müde": "уставший", "kann": "может", "nicht": "не",
+  "mehr": "больше", "laufen": "бегать", "besitzer": "владелец", "will": "хочет", "füttern": "кормить", "weg": "прочь",
+  "beschließt": "решает", "nach": "в", "bremen": "Бремен", "dort": "там", "stadtmusikant": "городской музыкант",
+  "werden": "стать", "unterwegs": "по пути", "trifft": "встречает", "hund": "собака", "warum": "почему",
+  "freund": "друг", "antwortet": "отвечает", "ich": "я", "bin": "есть", "jagen": "охотиться", "herr": "хозяин",
+  "wollte": "хотел", "mich": "меня", "schlagen": "бить", "komm": "иди", "mit": "с", "mir": "мной", "spiele": "играю",
+  "laute": "лютня", "du": "ты", "schlägst": "бьешь", "trommel": "барабан", "freut": "радуется", "später": "позже",
+  "sehen": "видят", "katze": "кошка", "gesicht": "лицо / морда", "mag": "любит", "keine": "никаких", "mäuse": "мышей",
+  "fangen": "ловить", "schließt": "присоединяется", "beiden": "обоим", "drei": "три", "tiere": "животные",
+  "hahn": "петух", "kräht": "кукарекает", "laut": "громко", "vier": "четыре", "wandern": "путешествуют",
+  "zusammen": "вместе", "um": "чтобы", "musik": "музыка", "machen": "делать",
+  
+  // A2 - B2
+  "bekanntesten": "известнейших", "imposantesten": "внушительных", "sehenswürdigkeiten": "достопримечательностей",
+  "ganz": "всей", "deutschland": "Германия", "gigantische": "гигантская", "kirche": "церковь", "zentrum": "центр",
+  "stadt": "город", "köln": "Кёльн", "gleich": "сразу", "neben": "рядом", "hauptbahnhof": "главный вокзал",
+  "ufer": "берег", "rheins": "Рейна", "täglich": "ежедневно", "kommen": "приходят", "tausende": "тысячи",
+  "besucher": "посетителей", "welt": "мир", "dieses": "это", "bau": "строительство", "begann": "началось",
+  "jahrhunderte": "века", "probleme": "проблемы", "dauerte": "длилось", "jahrhundert": "век", "vollendet": "завершено",
+  "türme": "башни", "hoch": "высокие", "stufen": "ступеньки", "aussicht": "вид", "nachmittag": "день",
+  "buch": "книга", "vergessen": "забыл", "augenblick": "мгновение", "erlebte": "переживал", "titel": "название",
+  "traum": "мечта", "licht": "свет", "schule": "школа", "schultern": "плечи", "seite": "страница",
+  "wort": "слово", "welt": "мир", "zeit": "время", "sommer": "лето", "entdeckung": "открытие",
+  "medizin": "медицина", "urlaub": "отпуск", "labor": "лаборатория", "pilz": "гриб", "bakterien": "бактерии",
+  "penicillin": "пенициллин", "millionen": "миллионы", "rettet": "спас",
+  "abgesondert": "выделял",
+  "abgestorben": "погибли",
+  "abwechselnd": "поочерёдно",
+  "alexander": "Александр",
+  "aller": "всех",
+  "allerdings": "однако",
+  "als": "как / когда",
+  "alten": "старых",
+  "am": "у / на",
+  "antibiotika": "антибиотики",
+  "antritt": "начало",
+  "arbeitstisch": "рабочий стол",
+  "architektonische": "архитектурный",
+  "atemberaubenden": "захватывающий",
+  "aus": "из",
+  "auszug": "отрывок",
+  "bakterienkulturen": "бактериальные культуры",
+  "bakterienwachstum": "рост бактерий",
+  "bakteriologe": "бактериолог",
+  "bastian": "Бастиан",
+  "bauarbeiten": "строительные работы",
+  "bauwerk": "сооружение",
+  "begleiter": "спутник",
+  "bei": "при / у",
+  "belohnt": "вознаграждаются",
+  "bemerkte": "заметил",
+  "bereits": "уже",
+  "bewundern": "восхищаться",
+  "bis": "до",
+  "bläulicher": "голубоватый",
+  "bremer": "бременский",
+  "buches": "книги",
+  "buchstaben": "буквы",
+  "dachkammer": "чердачная комната",
+  "dann": "затем",
+  "darauffolgende": "последующий",
+  "dass": "что",
+  "den": "этот / тот",
+  "der": "этот / тот",
+  "des": "этого / тот",
+  "diese": "эта / эти",
+  "diesem": "этому / этом",
+  "dom": "собор",
+  "doms": "собора",
+  "dreihundert": "триста",
+  "effektiv": "эффективно",
+  "einband": "переплёт",
+  "eine": "одна / какая-то",
+  "einen": "одного / какой-то",
+  "einer": "одной / некоторой",
+  "enger": "теснее",
+  "entschied": "решил",
+  "er": "он",
+  "erst": "только / лишь",
+  "erstaunen": "удивление",
+  "erste": "первая",
+  "es": "это / оно",
+  "fabelhafter": "сказочных",
+  "fantastische": "фантастический",
+  "fertigzubauen": "достроить",
+  "fest": "прочно",
+  "finanzielle": "финансовые",
+  "fleming": "Флеминг",
+  "flemings": "Флеминга",
+  "förmlich": "буквально",
+  "fühlte": "чувствовал",
+  "fünfhundert": "пятьсот",
+  "für": "для",
+  "gab": "были / существовали",
+  "ganzen": "целый",
+  "gebildet": "образовался",
+  "gebunden": "переплетён",
+  "gefahren": "опасностей",
+  "geheimnisvollen": "таинственный",
+  "gehört": "относится / принадлежит",
+  "gerettet": "спас",
+  "geschichte": "история",
+  "gesessen": "сидел",
+  "gesträubtem": "взъерошенными",
+  "geträumt": "мечтал",
+  "gewaltige": "огромное",
+  "gothische": "готическая",
+  "grundlegend": "основательно",
+  "grundstein": "основа",
+  "haar": "волосы",
+  "hatte": "имел / был",
+  "heiß": "жарко",
+  "helden": "героев",
+  "her": "сюда",
+  "heute": "сегодня",
+  "hochroten": "пылающими",
+  "ihm": "ему",
+  "ihn": "его",
+  "inspektion": "осмотр",
+  "isolierte": "выделил",
+  "jacke": "куртка",
+  "jahr": "год",
+  "jahre": "годы",
+  "jahres": "года",
+  "jedem": "каждым",
+  "junge": "мальчик",
+  "kalt": "холодно",
+  "kaum": "едва",
+  "keuchst": "тяжело дышишь",
+  "keucht": "тяжело дышит",
+  "kleiner": "маленький",
+  "komplett": "полностью",
+  "konnte": "мог",
+  "kulturen": "культуры",
+  "kölner": "кёльнский",
+  "können": "могут",
+  "laboratorium": "лаборатория",
+  "lang": "долго",
+  "las": "читал",
+  "laufe": "ходе",
+  "legte": "заложил",
+  "leuchten": "светиться",
+  "londoner": "лондонский",
+  "machte": "сделал",
+  "majestätischer": "величественных",
+  "man": "человек / люди",
+  "massenproduktion": "массовое производство",
+  "matratzen": "матрасы",
+  "medizinische": "медицинская",
+  "mein": "мой",
+  "meisterwerk": "шедевр",
+  "menschenleben": "человеческих жизней",
+  "meter": "метров",
+  "mittelalter": "Средневековье",
+  "moderne": "современная",
+  "monaten": "месяцев",
+  "mutige": "смелые",
+  "mutiger": "смелый",
+  "märchen": "сказка",
+  "namenloser": "безымянных",
+  "nannte": "назвал",
+  "nie": "никогда",
+  "noch": "ещё",
+  "obwohl": "хотя",
+  "oder": "или",
+  "offensichtlich": "очевидно",
+  "offiziell": "официально",
+  "ohne": "без",
+  "ordnungsgemäß": "должным образом",
+  "originalen": "оригинальным",
+  "penicillins": "пенициллина",
+  "perfektioniert": "усовершенствована",
+  "petrischalen": "чашки Петри",
+  "phänomen": "явление",
+  "pilzes": "грибка",
+  "plänen": "планам",
+  "politische": "политические",
+  "reinflüssigkeit": "чистый раствор",
+  "reinigen": "очищать",
+  "reportage": "репортаж",
+  "revolution": "революция",
+  "revolutionieren": "революционизировать",
+  "rhein": "Рейн",
+  "riesigen": "огромные",
+  "rotkäppchen": "Красная Шапочка",
+  "rückkehr": "возвращение",
+  "schalen": "чашки",
+  "schien": "казалось",
+  "schienen": "казались",
+  "schimmelpilz": "плесневый гриб",
+  "schimmerte": "мерцал",
+  "schließlich": "в конце концов",
+  "schlug": "открыл / перелистнул",
+  "schon": "уже",
+  "schottische": "шотландский",
+  "schummerigen": "тусклом",
+  "seidenen": "шёлковом",
+  "seine": "его",
+  "seinem": "его",
+  "seiner": "его",
+  "seines": "его",
+  "setzte": "сел / поставил",
+  "sich": "себя / -ся",
+  "sollte": "должен был",
+  "sommerurlaubs": "летнего отпуска",
+  "sondern": "а / но",
+  "stadtmusikanten": "городских музыкантов",
+  "staphylokokken": "стафилококковые",
+  "starrte": "пристально смотрел",
+  "steht": "стоит",
+  "steigen": "подняться",
+  "stellte": "установил / заметил",
+  "stillzustehen": "остановиться",
+  "stoff": "вещество",
+  "substanz": "вещество",
+  "sämtliche": "все",
+  "tiefer": "глубже",
+  "traurigen": "печальным",
+  "treffen": "встречать",
+  "umgebung": "окрестность / окружение",
+  "unendliche": "бесконечная",
+  "unesco": "ЮНЕСКО",
+  "ungewöhnliches": "необычное",
+  "unmittelbaren": "непосредственной",
+  "unterbrochen": "прервано",
+  "unzählige": "бесчисленные",
+  "verhinderte": "предотвращало",
+  "verlassen": "покидать",
+  "versank": "погрузился",
+  "verschiedene": "различные",
+  "verschließen": "закрывать",
+  "verstehen": "понимать",
+  "viele": "многие",
+  "voller": "полный",
+  "vollständig": "полностью",
+  "von": "от / из",
+  "vor": "перед / до",
+  "vorerst": "пока",
+  "vorsichtig": "осторожно",
+  "wangen": "щёки",
+  "war": "был",
+  "waren": "были",
+  "was": "что",
+  "weiteren": "дальнейших",
+  "weltkulturerbe": "Всемирное наследие",
+  "weltweit": "по всему миру",
+  "wendeltreppe": "винтовая лестница",
+  "wenig": "немного",
+  "wer": "кто",
+  "wesen": "существа",
+  "wie": "как",
+  "wird": "будет / становится",
+  "wirksamen": "действующее",
+  "wissenschaftlern": "учёными",
+  "wissenschaftsbericht": "научный отчёт",
+  "wohl": "вероятно",
+  "wovon": "о чём / о котором",
+  "wurde": "был / была",
+  "wurden": "были",
+  "wusste": "знал",
+  "wälder": "леса",
+  "zog": "натянул / потянул",
+  "zu": "к / чтобы",
+  "zufallsbeobachtung": "случайное наблюдение",
+  "zurückgelassen": "оставил",
+  "zwei": "два",
+  "ängstlicher": "испуганный",
+  "ära": "эра",
+  "über": "над / более"
+};
+
+let currentLvl = "A0";
+
+function renderStory(lvl) {
+  const data = stories[lvl];
+  document.getElementById('storyTitle').textContent = data.title;
+  document.getElementById('storyLvl').textContent = lvl;
+
+  let html = '';
+  data.paragraphs.forEach(paragraph => {
+    html += '<p>';
+    const tokens = paragraph.split(/(\s+)/);
+    tokens.forEach(token => {
+      if (/^\s+$/.test(token)) {
+        html += token;
+      } else {
+        const cleanWord = token.replace(/[.,!?:;"'()]/g, '');
+        html += `<span class="word" data-word="${cleanWord}">${token}</span>`;
+      }
+    });
+    html += '</p>';
+  });
+
+  document.getElementById('storyBody').innerHTML = html;
+}
+
+// Выбор уровня
+document.querySelectorAll('.lvl-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.lvl-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentLvl = btn.dataset.lvl;
+    renderStory(currentLvl);
+    hidePopover();
+  });
+});
+
+// Перевод по клику
+const popover = document.getElementById('popover');
+const popDe = document.getElementById('popDe');
+const popRu = document.getElementById('popRu');
+let activeSpan = null;
+
+document.getElementById('storyBody').addEventListener('click', (e) => {
+  const wordSpan = e.target.closest('.word');
+  if (!wordSpan) {
+    hidePopover();
+    return;
+  }
+
+  if (activeSpan) activeSpan.classList.remove('active');
+  activeSpan = wordSpan;
+  activeSpan.classList.add('active');
+
+  const rawWord = wordSpan.dataset.word;
+  const lowerWord = rawWord.toLowerCase();
+  const translation = dictionary[lowerWord] || rawWord;
+
+  popDe.textContent = rawWord;
+  popRu.textContent = translation;
+
+  const rect = wordSpan.getBoundingClientRect();
+  popover.style.left = `${rect.left + rect.width / 2 + window.scrollX}px`;
+  popover.style.top = `${rect.top + window.scrollY}px`;
+  popover.style.display = 'block';
+});
+
+function hidePopover() {
+  popover.style.display = 'none';
+  if (activeSpan) {
+    activeSpan.classList.remove('active');
+    activeSpan = null;
+  }
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.story-card') && !e.target.closest('.popover')) {
+    hidePopover();
+  }
+});
+
+// Инициализация
+renderStory("A0");
+</script>
+</body>
+</html>
